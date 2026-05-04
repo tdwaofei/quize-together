@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>题单管理 - 信息学竞赛练习系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans SC', sans-serif; }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .progress-bar { transition: width 0.5s ease; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-purple-50 to-pink-100 min-h-screen">
+    <!-- 导航栏 -->
+    <nav class="bg-white shadow-md">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl">📚</span>
+                <h1 class="text-xl font-bold text-gray-800">信息学竞赛练习系统 - 管理后台</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="text-gray-600">欢迎，<span id="userName">家长</span></span>
+                <button onclick="logout()" class="text-red-500 hover:text-red-700 font-medium">退出</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <div class="max-w-6xl mx-auto px-4 py-8">
+        <!-- 密码题设置区域 -->
+        <div class="bg-white rounded-2xl shadow-xl p-6 mb-6 fade-in">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">🔑 设置登录密码题</h2>
+            <p class="text-sm text-gray-500 mb-4">设置一道题目，答案的汉语拼音将作为孩子的登录密码</p>
+            
+            <div id="currentPasswordQuestion" class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4 hidden">
+                <p class="font-bold text-gray-700">当前密码题：</p>
+                <p id="currentQuestionText" class="text-indigo-700 mt-1"></p>
+                <p id="currentAnswerText" class="text-sm text-gray-500 mt-1"></p>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">问题（例如：昨天读的水浒传人物是谁？）</label>
+                    <input type="text" id="passwordQuestion" 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                        placeholder="输入密码题">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">答案（例如：李逵）</label>
+                    <input type="text" id="passwordAnswer" 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                        placeholder="输入答案">
+                    <p class="text-xs text-gray-500 mt-1">💡 系统会自动将答案转换为拼音作为密码（如"李逵"→"likui"）</p>
+                </div>
+                <button onclick="setPasswordQuestion()" 
+                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl transition">
+                    设置密码题
+                </button>
+                <div id="passwordSetStatus" class="hidden"></div>
+            </div>
+        </div>
+
+        <!-- 上传区域 -->
+        <div class="bg-white rounded-2xl shadow-xl p-6 mb-6 fade-in">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">📤 上传新题单</h2>
+            <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center" id="uploadArea">
+                <div class="text-4xl mb-4">📄</div>
+                <p class="text-gray-600 mb-4">选择或拖拽.md格式的题库文件到此处</p>
+                <p class="text-sm text-gray-400 mb-4">文件需包含：题的名字、题目、答案、解题过程、本题考点、复习要点</p>
+                <input type="file" id="fileInput" accept=".md" class="hidden" onchange="handleFileSelect(event)">
+                <button onclick="document.getElementById('fileInput').click()" 
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg transition">
+                    选择文件
+                </button>
+            </div>
+            <div id="uploadStatus" class="mt-4 hidden"></div>
+        </div>
+
+        <!-- 题单列表 -->
+        <div class="bg-white rounded-2xl shadow-xl p-6 fade-in">
+            <h2 class="text-xl font-bold text-gray-800 mb-6">📋 题单管理</h2>
+            
+            <div id="questionsList" class="space-y-4">
+                <div class="text-center py-12 text-gray-500">加载中...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 进度详情弹窗 -->
+    <div id="progressModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-2xl m-4 max-h-[80vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-800">完成情况详情</h3>
+                <button onclick="closeProgressModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            <div id="progressContent">
+                <!-- 动态内容 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 加载用户信息
+        async function loadUserInfo() {
+            try {
+                const response = await fetch('/api/user/info', { credentials: 'same-origin' });
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('userName').textContent = data.name;
+                }
+            } catch (error) {
+                console.error('获取用户信息失败:', error);
+            }
+        }
+
+        // 加载当前密码题
+        async function loadCurrentPasswordQuestion() {
+            try {
+                const response = await fetch('/api/password-question', { credentials: 'same-origin' });
+                const data = await response.json();
+                
+                const container = document.getElementById('currentPasswordQuestion');
+                const questionText = document.getElementById('currentQuestionText');
+                const answerText = document.getElementById('currentAnswerText');
+                
+                if (data.hasQuestion) {
+                    container.classList.remove('hidden');
+                    questionText.textContent = data.question;
+                    answerText.textContent = `设置时间：${new Date(data.setTime).toLocaleString('zh-CN')}`;
+                } else {
+                    container.classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('加载密码题失败:', error);
+            }
+        }
+
+        // 设置密码题
+        async function setPasswordQuestion() {
+            const question = document.getElementById('passwordQuestion').value.trim();
+            const answer = document.getElementById('passwordAnswer').value.trim();
+            const statusDiv = document.getElementById('passwordSetStatus');
+            
+            if (!question || !answer) {
+                statusDiv.className = 'p-4 rounded-lg bg-red-100 text-red-700';
+                statusDiv.textContent = '请输入问题和答案';
+                statusDiv.classList.remove('hidden');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/parent/password-question', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question, answer }),
+                    credentials: 'same-origin'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    statusDiv.className = 'p-4 rounded-lg bg-green-100 text-green-700';
+                    statusDiv.textContent = `密码题设置成功！密码为：${data.answerPinyin}`;
+                    statusDiv.classList.remove('hidden');
+                    
+                    // 清空输入框
+                    document.getElementById('passwordQuestion').value = '';
+                    document.getElementById('passwordAnswer').value = '';
+                    
+                    // 刷新当前密码题显示
+                    loadCurrentPasswordQuestion();
+                } else {
+                    statusDiv.className = 'p-4 rounded-lg bg-red-100 text-red-700';
+                    statusDiv.textContent = '设置失败：' + data.message;
+                    statusDiv.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('设置密码题失败:', error);
+                statusDiv.className = 'p-4 rounded-lg bg-red-100 text-red-700';
+                statusDiv.textContent = '设置失败，请重试';
+                statusDiv.classList.remove('hidden');
+            }
+        }
+
+        // 加载题单列表
+        async function loadQuestions() {
+            try {
+                const response = await fetch('/api/questions', { credentials: 'same-origin' });
+                const data = await response.json();
+                
+                const container = document.getElementById('questionsList');
+                
+                if (!data.success) {
+                    container.innerHTML = '<div class="text-center py-12 text-red-500">加载失败，请刷新重试</div>';
+                    return;
+                }
+                
+                if (data.questions.length === 0) {
+                    container.innerHTML = '<div class="text-center py-12 text-gray-500">暂无题单，请上传.md文件</div>';
+                    return;
+                }
+                
+                container.innerHTML = data.questions.map(q => {
+                    const createDate = q.createDate ? new Date(q.createDate).toLocaleDateString('zh-CN') : '-';
+                    
+                    return `
+                        <div class="border rounded-xl p-6 hover:shadow-lg transition bg-white">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="text-lg font-bold text-gray-800">${q.title}</h3>
+                                    <p class="text-sm text-gray-500 mt-1">${q.totalQuestions}道题 · 创建于 ${createDate}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex gap-3">
+                                <button onclick="stopExam('${q.id}')" 
+                                    class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition">
+                                    ⛔ 停止作答
+                                </button>
+                                <button onclick="viewProgress('${q.id}')" 
+                                    class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition">
+                                    📊 查看完成情况
+                                </button>
+                                <button onclick="deleteQuestion('${q.id}', '${q.title}')" 
+                                    class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition">
+                                    🗑️ 删除
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error('加载题单失败:', error);
+                document.getElementById('questionsList').innerHTML = 
+                    '<div class="text-center py-12 text-red-500">加载失败，请刷新重试</div>';
+            }
+        }
+
+        // 文件上传处理
+        async function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (!file.name.endsWith('.md')) {
+                showUploadStatus('请选择.md格式的文件', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            showUploadStatus('正在上传和解析...', 'loading');
+            
+            try {
+                const response = await fetch('/api/parent/upload', {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showUploadStatus(`上传成功！共 ${data.questionCount} 道题`, 'success');
+                    loadQuestions(); // 刷新列表
+                    document.getElementById('fileInput').value = '';
+                } else {
+                    showUploadStatus('上传失败：' + data.message, 'error');
+                }
+            } catch (error) {
+                console.error('上传失败:', error);
+                showUploadStatus('上传失败，请重试', 'error');
+            }
+        }
+
+        // 显示上传状态
+        function showUploadStatus(message, type) {
+            const statusDiv = document.getElementById('uploadStatus');
+            statusDiv.classList.remove('hidden');
+            
+            let bgClass = 'bg-gray-100 text-gray-700';
+            if (type === 'success') bgClass = 'bg-green-100 text-green-700';
+            if (type === 'error') bgClass = 'bg-red-100 text-red-700';
+            if (type === 'loading') bgClass = 'bg-blue-100 text-blue-700';
+            
+            statusDiv.className = `p-4 rounded-lg ${bgClass}`;
+            statusDiv.textContent = message;
+        }
+
+        // 停止作答
+        async function stopExam(questionId) {
+            if (!confirm('确定要停止该题单的所有作答吗？')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/parent/questions/${questionId}/stop`, {
+                    method: 'POST',
+                    credentials: 'same-origin'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('已停止作答');
+                } else {
+                    alert('操作失败：' + data.message);
+                }
+            } catch (error) {
+                console.error('停止失败:', error);
+                alert('操作失败');
+            }
+        }
+
+        // 查看完成情况
+        async function viewProgress(questionId) {
+            try {
+                const response = await fetch(`/api/parent/progress/${questionId}`, {
+                    credentials: 'same-origin'
+                });
+                
+                const data = await response.json();
+                
+                if (!data.success) {
+                    alert('获取进度失败');
+                    return;
+                }
+                
+                const modal = document.getElementById('progressModal');
+                const content = document.getElementById('progressContent');
+                
+                if (data.progress.length === 0) {
+                    content.innerHTML = '<p class="text-gray-500 text-center py-8">暂无作答记录</p>';
+                } else {
+                    content.innerHTML = `
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-2 text-left">学生</th>
+                                    <th class="px-4 py-2 text-left">状态</th>
+                                    <th class="px-4 py-2 text-left">得分</th>
+                                    <th class="px-4 py-2 text-left">答对/总数</th>
+                                    <th class="px-4 py-2 text-left">完成时间</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.progress.map(p => {
+                                    let statusText = '未开始';
+                                    let statusClass = 'text-gray-500';
+                                    if (p.status === 'completed') {
+                                        statusText = '已完成';
+                                        statusClass = 'text-green-600';
+                                    } else if (p.status === 'in_progress') {
+                                        statusText = '进行中';
+                                        statusClass = 'text-blue-600';
+                                    } else if (p.status === 'stopped') {
+                                        statusText = '已停止';
+                                        statusClass = 'text-red-600';
+                                    }
+                                    
+                                    const completeDate = p.completeDate ? 
+                                        new Date(p.completeDate).toLocaleString('zh-CN') : '-';
+                                    
+                                    return `
+                                        <tr class="border-b">
+                                            <td class="px-4 py-3 font-medium">${p.username}</td>
+                                            <td class="px-4 py-3 ${statusClass}">${statusText}</td>
+                                            <td class="px-4 py-3 font-bold text-indigo-600">${p.lastScore || 0}分</td>
+                                            <td class="px-4 py-3">${p.correctCount}/${p.totalCount}</td>
+                                            <td class="px-4 py-3 text-sm text-gray-500">${completeDate}</td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                }
+                
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            } catch (error) {
+                console.error('获取进度失败:', error);
+                alert('获取进度失败');
+            }
+        }
+
+        // 关闭进度弹窗
+        function closeProgressModal() {
+            const modal = document.getElementById('progressModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // 删除题单
+        async function deleteQuestion(questionId, title) {
+            if (!confirm(`确定要删除题单"${title}"吗？\n此操作不可恢复！`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/parent/questions/${questionId}`, {
+                    method: 'DELETE',
+                    credentials: 'same-origin'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('删除成功');
+                    loadQuestions(); // 刷新列表
+                } else {
+                    alert('删除失败：' + data.message);
+                }
+            } catch (error) {
+                console.error('删除失败:', error);
+                alert('删除失败');
+            }
+        }
+
+        // 退出登录
+        async function logout() {
+            try {
+                await fetch('/api/logout', { 
+                    method: 'POST',
+                    credentials: 'same-origin'
+                });
+                window.location.href = '/';
+            } catch (error) {
+                console.error('退出失败:', error);
+            }
+        }
+
+        // 拖拽上传
+        const uploadArea = document.getElementById('uploadArea');
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('bg-indigo-50', 'border-indigo-300');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('bg-indigo-50', 'border-indigo-300');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('bg-indigo-50', 'border-indigo-300');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                document.getElementById('fileInput').files = files;
+                handleFileSelect({ target: { files: files } });
+            }
+        });
+
+        // 页面加载
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserInfo();
+            loadQuestions();
+            loadCurrentPasswordQuestion();
+        });
+    </script>
+</body>
+</html>

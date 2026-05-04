@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的题单 - 信息学竞赛练习系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans SC', sans-serif; }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .progress-bar { transition: width 0.5s ease; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <!-- 导航栏 -->
+    <nav class="bg-white shadow-md">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl">📚</span>
+                <h1 class="text-xl font-bold text-gray-800">信息学竞赛练习系统</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="text-gray-600">欢迎，<span id="userName">孩子</span></span>
+                <button onclick="logout()" class="text-red-500 hover:text-red-700 font-medium">退出</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <div class="max-w-6xl mx-auto px-4 py-8">
+        <div class="bg-white rounded-2xl shadow-xl p-6 fade-in">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">我的题单</h2>
+            
+            <!-- 题单列表 -->
+            <div id="questionsList" class="space-y-4">
+                <!-- 动态加载 -->
+                <div class="text-center py-12 text-gray-500">加载中...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 加载用户信息
+        async function loadUserInfo() {
+            try {
+                const response = await fetch('/api/user/info', { credentials: 'same-origin' });
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('userName').textContent = data.name;
+                }
+            } catch (error) {
+                console.error('获取用户信息失败:', error);
+            }
+        }
+
+        // 加载题单列表
+        async function loadQuestions() {
+            try {
+                const response = await fetch('/api/questions', { credentials: 'same-origin' });
+                const data = await response.json();
+                
+                const container = document.getElementById('questionsList');
+                
+                if (!data.success) {
+                    container.innerHTML = '<div class="text-center py-12 text-red-500">加载失败，请刷新重试</div>';
+                    return;
+                }
+                
+                if (data.questions.length === 0) {
+                    container.innerHTML = '<div class="text-center py-12 text-gray-500">暂无题单，请等待家长上传</div>';
+                    return;
+                }
+                
+                container.innerHTML = data.questions.map(q => {
+                    // 确定状态样式
+                    let statusClass = 'bg-gray-100 text-gray-600';
+                    let statusText = '未开始';
+                    
+                    if (q.status === 'completed') {
+                        statusClass = 'bg-green-100 text-green-600';
+                        statusText = '已完成';
+                    } else if (q.status === 'in_progress') {
+                        statusClass = 'bg-blue-100 text-blue-600';
+                        statusText = '进行中';
+                    } else if (q.status === 'stopped') {
+                        statusClass = 'bg-red-100 text-red-600';
+                        statusText = '已停止';
+                    }
+                    
+                    // 格式化日期
+                    const createDate = q.createDate ? new Date(q.createDate).toLocaleDateString('zh-CN') : '-';
+                    const completeDate = q.completeDate ? new Date(q.completeDate).toLocaleDateString('zh-CN') : '-';
+                    
+                    // 判断按钮状态
+                    const canContinue = q.status !== 'stopped' && q.status !== 'completed';
+                    const canRestart = q.status === 'completed' || q.status === 'stopped';
+                    
+                    return `
+                        <div class="border rounded-xl p-6 hover:shadow-lg transition bg-white">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="text-lg font-bold text-gray-800">${q.title}</h3>
+                                    <span class="inline-block mt-2 px-3 py-1 rounded-full text-xs font-medium ${statusClass}">
+                                        ${statusText}
+                                    </span>
+                                </div>
+                                ${q.lastScore !== null ? `
+                                    <div class="text-right">
+                                        <div class="text-3xl font-bold text-indigo-600">${q.lastScore}</div>
+                                        <div class="text-xs text-gray-500">分</div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            
+                            <div class="grid grid-cols-4 gap-4 text-sm text-gray-600 mb-4">
+                                <div>
+                                    <span class="text-gray-400">出题日期</span>
+                                    <p class="font-medium">${createDate}</p>
+                                </div>
+                                <div>
+                                    <span class="text-gray-400">完成日期</span>
+                                    <p class="font-medium">${completeDate}</p>
+                                </div>
+                                <div>
+                                    <span class="text-gray-400">完成进度</span>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <div class="flex-1 bg-gray-200 rounded-full h-2">
+                                            <div class="bg-indigo-600 h-2 rounded-full progress-bar" style="width: ${q.progress}%"></div>
+                                        </div>
+                                        <span class="font-medium">${q.progress}%</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <span class="text-gray-400">答题情况</span>
+                                    <p class="font-medium">${q.answeredCount}/${q.totalQuestions} 题</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex gap-3">
+                                ${canRestart ? `
+                                    <button onclick="startExam('${q.id}', true)" 
+                                        class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition">
+                                        🔄 重新作答
+                                    </button>
+                                ` : ''}
+                                ${canContinue ? `
+                                    <button onclick="startExam('${q.id}', false)" 
+                                        class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition">
+                                        ▶️ 继续作答
+                                    </button>
+                                ` : ''}
+                                ${q.status === 'stopped' ? `
+                                    <button disabled 
+                                        class="flex-1 bg-gray-300 text-gray-500 font-bold py-2 px-4 rounded-lg cursor-not-allowed">
+                                        ⛔ 已停止
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (error) {
+                console.error('加载题单失败:', error);
+                document.getElementById('questionsList').innerHTML = 
+                    '<div class="text-center py-12 text-red-500">加载失败，请刷新重试</div>';
+            }
+        }
+
+        // 开始考试
+        function startExam(questionId, restart) {
+            if (restart) {
+                if (!confirm('重新作答将清除之前的进度，确定吗？')) {
+                    return;
+                }
+            }
+            window.location.href = `/exam/${questionId}`;
+        }
+
+        // 退出登录
+        async function logout() {
+            try {
+                await fetch('/api/logout', { 
+                    method: 'POST',
+                    credentials: 'same-origin'
+                });
+                window.location.href = '/';
+            } catch (error) {
+                console.error('退出失败:', error);
+            }
+        }
+
+        // 页面加载时执行
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserInfo();
+            loadQuestions();
+        });
+    </script>
+</body>
+</html>
