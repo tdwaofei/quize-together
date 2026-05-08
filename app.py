@@ -310,15 +310,17 @@ def submit_answer(question_id):
     
     # 计算得分
     correct_count = 0
+    correct_indices = []
     questions = question_data.get('questions', [])
-    
+
     for idx, q in enumerate(questions):
-        user_answer = answers.get(str(idx))
-        if user_answer and user_answer == q.get('answer'):
+        user_answer = extract_user_answer(answers, str(idx))
+        if user_answer and is_answer_correct(user_answer, q):
             correct_count += 1
-    
-    score = correct_count * 10  # 每题10分
-    
+            correct_indices.append(idx)
+
+    score = calculate_score(correct_indices, len(questions))
+
     # 保存进度
     progress_file = os.path.join(PROGRESS_DIR, f"{session['username']}_{question_id}.json")
     progress_data = {
@@ -342,6 +344,100 @@ def submit_answer(question_id):
         'correctCount': correct_count,
         'totalCount': len(questions)
     })
+
+@app.route('/api/questions/<question_id>/autosave', methods=['POST'])
+@login_required('student')
+def autosave_progress(question_id):
+    """自动保存进度（不提交，仅保存当前作答状态）"""
+    data = request.get_json()
+    answers = data.get('answers', {})
+    
+    filepath = os.path.join(QUESTIONS_DIR, f"{question_id}.json")
+    if not os.path.exists(filepath):
+        return jsonify({'success': False, 'message': '题目不存在'}), 404
+    
+    with open(filepath, 'r', encoding='utf-8') as f:
+        question_data = json.load(f)
+    
+    questions = question_data.get('questions', [])
+    correct_count = 0
+    correct_indices = []
+    for idx, q in enumerate(questions):
+        user_answer = extract_user_answer(answers, str(idx))
+        if user_answer and is_answer_correct(user_answer, q):
+            correct_count += 1
+            correct_indices.append(idx)
+
+    progress_file = os.path.join(PROGRESS_DIR, f"{session['username']}_{question_id}.json")
+    progress_data = {
+        'answers': answers,
+        'correctCount': correct_count,
+        'totalCount': len(questions),
+        'lastScore': calculate_score(correct_indices, len(questions)),
+        'lastSubmitTime': datetime.now().isoformat(),
+        'status': 'in_progress'
+    }
+    
+    with open(progress_file, 'w', encoding='utf-8') as f:
+        json.dump(progress_data, f, ensure_ascii=False, indent=2)
+    
+    return jsonify({'success': True, 'message': '进度已保存'})
+
+def extract_user_answer(answers, idx):
+    """从 answers 中提取用户答案，兼容对象和字符串格式"""
+    val = answers.get(idx)
+    if isinstance(val, dict):
+        return val.get('selected', '')
+    return val
+
+def get_question_points(question_index, total_questions):
+    """获取指定题目的分值（整数分配方案，确保总分100）"""
+    if total_questions == 0:
+        return 0
+    base = 100 // total_questions
+    remainder = 100 % total_questions
+    # 前 remainder 道题多1分
+    return base + 1 if question_index < remainder else base
+
+def calculate_score(correct_indices, total_questions):
+    """计算得分（整数分配方案，总分100）
+    correct_indices: 答对题目的索引列表
+    """
+    if total_questions == 0:
+        return 0
+    score = 0
+    for idx in correct_indices:
+        score += get_question_points(idx, total_questions)
+    return score
+
+def is_answer_correct(user_answer, question):
+    """判断用户答案是否正确，支持单选、多选、判断题"""
+    correct_answer = question.get('answer', '')
+    q_type = question.get('type', 'single')
+    
+    if not user_answer or not correct_answer:
+        return False
+    
+    if q_type == 'truefalse':
+        user_norm = normalize_truefalse(user_answer)
+        correct_norm = normalize_truefalse(correct_answer)
+        return user_norm == correct_norm
+    
+    if q_type == 'multiple':
+        user_set = set(user_answer.upper())
+        correct_set = set(correct_answer.upper())
+        return user_set == correct_set
+    
+    return user_answer.upper() == correct_answer.upper()
+
+def normalize_truefalse(answer):
+    """统一判断题答案为 'T' 或 'F'"""
+    a = answer.strip().upper()
+    if a in ('正确', '对', '√', 'T', 'TRUE'):
+        return 'T'
+    if a in ('错误', '错', '×', 'F', 'FALSE'):
+        return 'F'
+    return a
 
 # ============ 家长端API ============
 
@@ -437,17 +533,40 @@ def stop_question(question_id):
 @app.route('/api/parent/progress/<question_id>', methods=['GET'])
 @login_required('parent')
 def get_all_progress(question_id):
-    """获取所有学生的完成情况"""
+    """获取所有学生的完成情况（含逐题详情）"""
     progress_list = []
+    
+    # 加载题目数据获取题目信息
+    question_filepath = os.path.join(QUESTIONS_DIR, f"{question_id}.json")
+    question_data = None
+    if os.path.exists(question_filepath):
+        with open(question_filepath, 'r', encoding='utf-8') as f:
+            question_data = json.load(f)
     
     for filename in os.listdir(PROGRESS_DIR):
         if filename.endswith(f"_{question_id}.json"):
-            # 提取用户名
             username = filename.replace(f"_{question_id}.json", "")
             
             filepath = os.path.join(PROGRESS_DIR, filename)
             with open(filepath, 'r', encoding='utf-8') as f:
                 data = json.load(f)
+            
+            # 构建逐题详情
+            question_details = []
+            if question_data:
+                for idx, q in enumerate(question_data.get('questions', [])):
+                    user_ans = data.get('answers', {}).get(str(idx))
+                    detail = {
+                        'index': idx + 1,
+                        'id': q.get('id', ''),
+                        'title': q.get('title', ''),
+                        'type': q.get('type', 'single'),
+                        'userAnswer': user_ans.get('selected', '') if user_ans else '',
+                        'correctAnswer': q.get('answer', ''),
+                        'isCorrect': user_ans.get('correct', False) if user_ans else None,
+                        'submitted': user_ans.get('submitted', False) if user_ans else False
+                    }
+                    question_details.append(detail)
             
             progress_list.append({
                 'username': username,
@@ -455,7 +574,8 @@ def get_all_progress(question_id):
                 'correctCount': data.get('correctCount', 0),
                 'totalCount': data.get('totalCount', 0),
                 'completeDate': data.get('completeDate'),
-                'status': data.get('status', 'not_started')
+                'status': data.get('status', 'not_started'),
+                'questionDetails': question_details
             })
     
     return jsonify({'success': True, 'progress': progress_list})
@@ -466,4 +586,4 @@ def static_files(filename):
     return send_from_directory('static', filename)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=False)

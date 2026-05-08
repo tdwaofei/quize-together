@@ -64,6 +64,9 @@ def parse_md_to_json(content):
     if title_match:
         result['title'] = title_match.group(1).strip()
     
+    # 剔除格式说明等非题目内容（防止末尾的说明表格被解析为选项）
+    content = re.sub(r'\n##+\s*格式说明[\s\S]*', '', content)
+    
     # 提取说明部分（标题和第一个题目之间的内容）
     desc_match = re.search(r'^#.+?\n(.+?)(?=\n##?\s+(?:一、|单项|不定项)|\n###\s+(?:考点|第)|\Z)', content, re.DOTALL | re.MULTILINE)
     if desc_match:
@@ -94,10 +97,16 @@ def parse_question_block(block):
     支持两种格式：
     1. ### 考点 X.X 标题 + **题目：**格式
     2. ### 第 X 题 + 直接题目内容（在details标签内有答案）
+    
+    题目类型自动识别：
+    - 答案含多个字母(如AB/ABC) → 多选题(multiple)
+    - 答案为正确/错误/对/错/√/×/T/F → 判断题(truefalse)
+    - 答案含单个字母(A-D) → 单选题(single)
     """
     question = {
         'id': '',
         'title': '',
+        'type': 'single',
         'question': '',
         'options': {},
         'answer': '',
@@ -164,14 +173,30 @@ def parse_question_block(block):
     
     # 提取答案（优先从details内容中提取，否则从整个block）
     search_block = details_content if details_content else block
-    # 支持格式: **答案：B** (字母在加粗内) 或 **答案：** B (字母在外)
-    # 格式1: **答案：B** - 字母在加粗标记内
-    answer_match = re.search(r'\*\*答案[:：]([A-D])\*\*', search_block)
+    
+    # 格式1: **答案：B** 或 **答案：AB** - 字母在加粗标记内（支持多字母）
+    answer_match = re.search(r'\*\*答案[:：]([A-Da-d]+)\*\*', search_block)
     if not answer_match:
-        # 格式2: **答案：** B - 字母在加粗标记外
-        answer_match = re.search(r'\*\*答案[:：]\*\*\s*([A-D])', search_block)
+        # 格式2: **答案：** B 或 **答案：** AB - 字母在加粗标记外
+        answer_match = re.search(r'\*\*答案[:：]\*\*\s*([A-Da-d]+)', search_block)
+    if not answer_match:
+        # 格式3: **答案：正确** 或 **答案：错误** - 判断题中文
+        answer_match = re.search(r'\*\*答案[:：](正确|错误|对|错|[√×])\*\*', search_block)
+    if not answer_match:
+        # 格式4: **答案：** 正确 - 判断题中文在加粗外
+        answer_match = re.search(r'\*\*答案[:：]\*\*\s*(正确|错误|对|错|[√×])', search_block)
+    if not answer_match:
+        # 格式5: **答案：T** 或 **答案：F** - 判断题英文
+        answer_match = re.search(r'\*\*答案[:：]([TFtf])\*\*', search_block)
+    if not answer_match:
+        answer_match = re.search(r'\*\*答案[:：]\*\*\s*([TFtf])', search_block)
+    
     if answer_match:
-        question['answer'] = answer_match.group(1)
+        raw_answer = answer_match.group(1).strip().upper()
+        question['answer'] = raw_answer
+    
+    # 自动识别题目类型
+    question['type'] = detect_question_type(question['answer'])
     
     # 提取解题过程
     solution_match = re.search(
@@ -201,10 +226,34 @@ def parse_question_block(block):
     
     return question if question['question'] else None
 
+def detect_question_type(answer):
+    """
+    根据答案自动识别题目类型
+    - 多字母(如AB/ABC) → 'multiple' (多选题)
+    - 正确/错误/对/错/√/×/T/F → 'truefalse' (判断题)
+    - 单字母(A-D) → 'single' (单选题)
+    """
+    if not answer:
+        return 'single'
+    
+    upper = answer.upper()
+    
+    if upper in ('正确', '错误', '对', '错', '√', '×', 'T', 'F'):
+        return 'truefalse'
+    
+    if re.match(r'^[A-D]+$', upper) and len(upper) > 1:
+        return 'multiple'
+    
+    return 'single'
+
 def clean_markdown(text):
     """
     清理markdown标记，但保留代码块格式
+    先提取代码块保护起来，避免代码中的*被误删为斜体标记
     """
+    # 先提取并保护代码块
+    text, code_blocks = extract_code_blocks(text)
+    
     # 移除加粗标记
     text = re.sub(r'\*\*', '', text)
     # 移除斜体标记
@@ -217,11 +266,15 @@ def clean_markdown(text):
     text = re.sub(r'<!--.*?-->', '', text, flags=re.DOTALL)
     # 清理多余的空行
     text = re.sub(r'\n{3,}', '\n\n', text)
+    
+    # 恢复代码块
+    text = restore_code_blocks(text, code_blocks)
+    
     return text.strip()
 
 def extract_code_blocks(text):
     """
-    提取代码块并保留格式
+    提取代码块并保留格式，同时保护多行代码块和行内代码
     """
     code_blocks = {}
     counter = 0
@@ -233,8 +286,10 @@ def extract_code_blocks(text):
         counter += 1
         return placeholder
     
-    # 替换代码块
+    # 先保护多行代码块 ```...```
     text = re.sub(r'```[\s\S]*?```', replace_code_block, text)
+    # 再保护行内代码 `...`
+    text = re.sub(r'`[^`]+`', replace_code_block, text)
     
     return text, code_blocks
 

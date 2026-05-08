@@ -5,43 +5,352 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>我的题单 - 信息学竞赛练习系统</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Noto Sans SC', sans-serif; }
-        .fade-in { animation: fadeIn 0.5s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .progress-bar { transition: width 0.5s ease; }
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            min-height: 100vh;
+            color: #e2e8f0;
+        }
+        
+        /* 背景动画粒子效果 */
+        .bg-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(99, 102, 241, 0.3);
+            border-radius: 50%;
+            animation: float 20s infinite linear;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+        }
+        
+        /* 玻璃拟态卡片 */
+        .glass-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 
+                0 4px 30px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+        
+        .glass-card:hover {
+            border-color: rgba(99, 102, 241, 0.3);
+            box-shadow: 
+                0 8px 40px rgba(99, 102, 241, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        /* 霓虹发光效果 */
+        .neon-glow {
+            box-shadow: 
+                0 0 20px rgba(99, 102, 241, 0.3),
+                0 0 40px rgba(99, 102, 241, 0.1);
+        }
+        
+        .neon-text {
+            text-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+        }
+        
+        /* 进度条动画 */
+        .progress-fill {
+            background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        
+        /* 状态标签 */
+        .status-completed {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(21, 128, 61, 0.2) 100%);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #4ade80;
+        }
+        
+        .status-progress {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(67, 56, 202, 0.2) 100%);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: #818cf8;
+        }
+        
+        .status-pending {
+            background: linear-gradient(135deg, rgba(148, 163, 184, 0.2) 0%, rgba(100, 116, 139, 0.2) 100%);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            color: #94a3b8;
+        }
+        
+        .status-stopped {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(185, 28, 28, 0.2) 100%);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #f87171;
+        }
+        
+        /* 按钮样式 */
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            border: none;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #cbd5e1;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* 输入框样式 */
+        .glass-input {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        
+        .glass-input:focus {
+            outline: none;
+            border-color: rgba(99, 102, 241, 0.5);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        
+        .glass-input::placeholder {
+            color: #64748b;
+        }
+        
+        /* 分数显示 */
+        .score-display {
+            font-family: 'JetBrains Mono', monospace;
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(251, 191, 36, 0.3);
+        }
+        
+        /* 淡入动画 */
+        .fade-in {
+            animation: fadeInUp 0.6s ease-out forwards;
+            opacity: 0;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* 导航栏玻璃效果 */
+        .nav-glass {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        /* 滚动条美化 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.5);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.7);
+        }
     </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+<body class="antialiased">
+    <!-- 背景粒子 -->
+    <div class="bg-particles" id="particles"></div>
+    
     <!-- 导航栏 -->
-    <nav class="bg-white shadow-md">
-        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <span class="text-2xl">📚</span>
-                <h1 class="text-xl font-bold text-gray-800">信息学竞赛练习系统</h1>
-            </div>
-            <div class="flex items-center gap-4">
-                <span class="text-gray-600">欢迎，<span id="userName">孩子</span></span>
-                <button onclick="logout()" class="text-red-500 hover:text-red-700 font-medium">退出</button>
+    <nav class="nav-glass fixed top-0 left-0 right-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center neon-glow">
+                        <span class="text-xl">⚡</span>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold text-white tracking-wide">信息学竞赛</h1>
+                        <p class="text-xs text-slate-400">练习系统</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-6">
+                    <div class="text-right">
+                        <p class="text-sm text-slate-300">欢迎回来</p>
+                        <p class="text-xs text-indigo-400 font-medium" id="userName">学习者</p>
+                    </div>
+                    <button onclick="logout()" class="btn-secondary px-4 py-2 rounded-lg text-sm font-medium">
+                        退出
+                    </button>
+                </div>
             </div>
         </div>
     </nav>
 
     <!-- 主内容区 -->
-    <div class="max-w-6xl mx-auto px-4 py-8">
-        <div class="bg-white rounded-2xl shadow-xl p-6 fade-in">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">我的题单</h2>
+    <div class="pt-24 pb-12 px-6">
+        <div class="max-w-7xl mx-auto">
+            <!-- 页面标题 -->
+            <div class="mb-8 fade-in" style="animation-delay: 0.1s;">
+                <h2 class="text-3xl font-bold text-white mb-2">我的题单</h2>
+                <p class="text-slate-400">管理和追踪你的学习进度</p>
+            </div>
+            
+            <!-- 统计卡片 -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 fade-in" style="animation-delay: 0.2s;">
+                <div class="glass-card rounded-2xl p-5">
+                    <p class="text-slate-400 text-sm mb-1">总题单</p>
+                    <p class="text-3xl font-bold text-white" id="statTotal">0</p>
+                </div>
+                <div class="glass-card rounded-2xl p-5">
+                    <p class="text-green-400 text-sm mb-1">已完成</p>
+                    <p class="text-3xl font-bold text-white" id="statCompleted">0</p>
+                </div>
+                <div class="glass-card rounded-2xl p-5">
+                    <p class="text-indigo-400 text-sm mb-1">进行中</p>
+                    <p class="text-3xl font-bold text-white" id="statProgress">0</p>
+                </div>
+                <div class="glass-card rounded-2xl p-5">
+                    <p class="text-amber-400 text-sm mb-1">平均分</p>
+                    <p class="text-3xl font-bold text-white" id="statAvg">-</p>
+                </div>
+            </div>
+            
+            <!-- 搜索和筛选区域 -->
+            <div class="glass-card rounded-2xl p-6 mb-6 fade-in" style="animation-delay: 0.3s;">
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                    <!-- 试题名称搜索 -->
+                    <div class="md:col-span-5">
+                        <label class="block text-sm text-slate-400 mb-2">搜索题单</label>
+                        <div class="relative">
+                            <input type="text" id="searchName" placeholder="输入试题名称..." 
+                                class="glass-input w-full px-4 py-3 rounded-xl text-sm"
+                                oninput="filterQuestions()">
+                            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500">🔍</span>
+                        </div>
+                    </div>
+                    <!-- 完成状态筛选 -->
+                    <div class="md:col-span-3">
+                        <label class="block text-sm text-slate-400 mb-2">完成状态</label>
+                        <select id="filterStatus" onchange="filterQuestions()" 
+                            class="glass-input w-full px-4 py-3 rounded-xl text-sm cursor-pointer">
+                            <option value="" class="bg-slate-800">全部状态</option>
+                            <option value="not_started" class="bg-slate-800">未开始</option>
+                            <option value="in_progress" class="bg-slate-800">进行中</option>
+                            <option value="completed" class="bg-slate-800">已完成</option>
+                            <option value="stopped" class="bg-slate-800">已停止</option>
+                        </select>
+                    </div>
+                    <!-- 排序方式 -->
+                    <div class="md:col-span-3">
+                        <label class="block text-sm text-slate-400 mb-2">排序方式</label>
+                        <select id="sortBy" onchange="filterQuestions()" 
+                            class="glass-input w-full px-4 py-3 rounded-xl text-sm cursor-pointer">
+                            <option value="createDate_desc" class="bg-slate-800">最新发布</option>
+                            <option value="createDate_asc" class="bg-slate-800">最早发布</option>
+                            <option value="name_asc" class="bg-slate-800">名称 A-Z</option>
+                            <option value="name_desc" class="bg-slate-800">名称 Z-A</option>
+                            <option value="score_desc" class="bg-slate-800">得分高到低</option>
+                            <option value="progress_desc" class="bg-slate-800">进度高到低</option>
+                        </select>
+                    </div>
+                    <!-- 重置按钮 -->
+                    <div class="md:col-span-1 flex items-end">
+                        <button onclick="resetFilters()" 
+                            class="w-full btn-secondary py-3 rounded-xl text-sm font-medium" title="重置筛选">
+                            ↺
+                        </button>
+                    </div>
+                </div>
+            </div>
             
             <!-- 题单列表 -->
             <div id="questionsList" class="space-y-4">
                 <!-- 动态加载 -->
-                <div class="text-center py-12 text-gray-500">加载中...</div>
+                <div class="text-center py-16 text-slate-500">
+                    <div class="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p>加载中...</p>
+                </div>
+            </div>
+            
+            <!-- 空状态提示 -->
+            <div id="emptyState" class="hidden text-center py-16 fade-in">
+                <div class="text-6xl mb-4">📭</div>
+                <p class="text-slate-400 text-lg">没有找到符合条件的题单</p>
+                <button onclick="resetFilters()" class="mt-4 text-indigo-400 hover:text-indigo-300 text-sm">
+                    清除筛选条件
+                </button>
             </div>
         </div>
     </div>
 
     <script>
+        let allQuestions = [];
+        
+        // 初始化背景粒子
+        function initParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+                container.appendChild(particle);
+            }
+        }
+        
         // 加载用户信息
         async function loadUserInfo() {
             try {
@@ -61,112 +370,232 @@
                 const response = await fetch('/api/questions', { credentials: 'same-origin' });
                 const data = await response.json();
                 
-                const container = document.getElementById('questionsList');
-                
                 if (!data.success) {
-                    container.innerHTML = '<div class="text-center py-12 text-red-500">加载失败，请刷新重试</div>';
+                    document.getElementById('questionsList').innerHTML = 
+                        '<div class="text-center py-12 text-red-400">加载失败，请刷新重试</div>';
                     return;
                 }
                 
                 if (data.questions.length === 0) {
-                    container.innerHTML = '<div class="text-center py-12 text-gray-500">暂无题单，请等待家长上传</div>';
+                    document.getElementById('questionsList').innerHTML = 
+                        '<div class="text-center py-12 text-slate-500">暂无题单，请等待家长上传</div>';
                     return;
                 }
                 
-                container.innerHTML = data.questions.map(q => {
-                    // 确定状态样式
-                    let statusClass = 'bg-gray-100 text-gray-600';
-                    let statusText = '未开始';
-                    
-                    if (q.status === 'completed') {
-                        statusClass = 'bg-green-100 text-green-600';
-                        statusText = '已完成';
-                    } else if (q.status === 'in_progress') {
-                        statusClass = 'bg-blue-100 text-blue-600';
-                        statusText = '进行中';
-                    } else if (q.status === 'stopped') {
-                        statusClass = 'bg-red-100 text-red-600';
-                        statusText = '已停止';
-                    }
-                    
-                    // 格式化日期
-                    const createDate = q.createDate ? new Date(q.createDate).toLocaleDateString('zh-CN') : '-';
-                    const completeDate = q.completeDate ? new Date(q.completeDate).toLocaleDateString('zh-CN') : '-';
-                    
-                    // 判断按钮状态
-                    const canContinue = q.status !== 'stopped' && q.status !== 'completed';
-                    const canRestart = q.status === 'completed' || q.status === 'stopped';
-                    
-                    return `
-                        <div class="border rounded-xl p-6 hover:shadow-lg transition bg-white">
-                            <div class="flex justify-between items-start mb-4">
-                                <div>
-                                    <h3 class="text-lg font-bold text-gray-800">${q.title}</h3>
-                                    <span class="inline-block mt-2 px-3 py-1 rounded-full text-xs font-medium ${statusClass}">
-                                        ${statusText}
-                                    </span>
-                                </div>
-                                ${q.lastScore !== null ? `
-                                    <div class="text-right">
-                                        <div class="text-3xl font-bold text-indigo-600">${q.lastScore}</div>
-                                        <div class="text-xs text-gray-500">分</div>
-                                    </div>
-                                ` : ''}
-                            </div>
-                            
-                            <div class="grid grid-cols-4 gap-4 text-sm text-gray-600 mb-4">
-                                <div>
-                                    <span class="text-gray-400">出题日期</span>
-                                    <p class="font-medium">${createDate}</p>
-                                </div>
-                                <div>
-                                    <span class="text-gray-400">完成日期</span>
-                                    <p class="font-medium">${completeDate}</p>
-                                </div>
-                                <div>
-                                    <span class="text-gray-400">完成进度</span>
-                                    <div class="flex items-center gap-2 mt-1">
-                                        <div class="flex-1 bg-gray-200 rounded-full h-2">
-                                            <div class="bg-indigo-600 h-2 rounded-full progress-bar" style="width: ${q.progress}%"></div>
-                                        </div>
-                                        <span class="font-medium">${q.progress}%</span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <span class="text-gray-400">答题情况</span>
-                                    <p class="font-medium">${q.answeredCount}/${q.totalQuestions} 题</p>
-                                </div>
-                            </div>
-                            
-                            <div class="flex gap-3">
-                                ${canRestart ? `
-                                    <button onclick="startExam('${q.id}', true)" 
-                                        class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition">
-                                        🔄 重新作答
-                                    </button>
-                                ` : ''}
-                                ${canContinue ? `
-                                    <button onclick="startExam('${q.id}', false)" 
-                                        class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition">
-                                        ▶️ 继续作答
-                                    </button>
-                                ` : ''}
-                                ${q.status === 'stopped' ? `
-                                    <button disabled 
-                                        class="flex-1 bg-gray-300 text-gray-500 font-bold py-2 px-4 rounded-lg cursor-not-allowed">
-                                        ⛔ 已停止
-                                    </button>
-                                ` : ''}
-                            </div>
-                        </div>
-                    `;
-                }).join('');
+                allQuestions = data.questions;
+                updateStats(allQuestions);
+                filterQuestions();
                 
             } catch (error) {
                 console.error('加载题单失败:', error);
                 document.getElementById('questionsList').innerHTML = 
-                    '<div class="text-center py-12 text-red-500">加载失败，请刷新重试</div>';
+                    '<div class="text-center py-12 text-red-400">加载失败，请刷新重试</div>';
             }
+        }
+
+        // 更新统计数据
+        function updateStats(questions) {
+            const total = questions.length;
+            const completed = questions.filter(q => q.status === 'completed').length;
+            const inProgress = questions.filter(q => q.status === 'in_progress').length;
+            const notStarted = questions.filter(q => q.status === 'not_started').length;
+            
+            // 计算平均分
+            const completedQuestions = questions.filter(q => q.lastScore !== null);
+            const avgScore = completedQuestions.length > 0 
+                ? Math.round(completedQuestions.reduce((sum, q) => sum + q.lastScore, 0) / completedQuestions.length)
+                : '-';
+            
+            // 动画更新数字
+            animateNumber('statTotal', total);
+            animateNumber('statCompleted', completed);
+            animateNumber('statProgress', inProgress);
+            document.getElementById('statAvg').textContent = avgScore;
+        }
+        
+        function animateNumber(id, target) {
+            const el = document.getElementById(id);
+            const start = parseInt(el.textContent) || 0;
+            const duration = 600;
+            const startTime = performance.now();
+            
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easeProgress = 1 - Math.pow(1 - progress, 3);
+                const current = Math.round(start + (target - start) * easeProgress);
+                el.textContent = current;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                }
+            }
+            requestAnimationFrame(update);
+        }
+
+        // 筛选和排序题目
+        function filterQuestions() {
+            const searchName = document.getElementById('searchName').value.toLowerCase().trim();
+            const filterStatus = document.getElementById('filterStatus').value;
+            const sortBy = document.getElementById('sortBy').value;
+            
+            let filtered = allQuestions.filter(q => {
+                if (searchName && !q.title.toLowerCase().includes(searchName)) {
+                    return false;
+                }
+                if (filterStatus && q.status !== filterStatus) {
+                    return false;
+                }
+                return true;
+            });
+            
+            filtered.sort((a, b) => {
+                switch (sortBy) {
+                    case 'createDate_desc':
+                        return new Date(b.createDate) - new Date(a.createDate);
+                    case 'createDate_asc':
+                        return new Date(a.createDate) - new Date(b.createDate);
+                    case 'name_asc':
+                        return a.title.localeCompare(b.title, 'zh-CN');
+                    case 'name_desc':
+                        return b.title.localeCompare(a.title, 'zh-CN');
+                    case 'score_desc':
+                        return (b.lastScore || 0) - (a.lastScore || 0);
+                    case 'progress_desc':
+                        return b.progress - a.progress;
+                    default:
+                        return 0;
+                }
+            });
+            
+            renderQuestionsList(filtered);
+        }
+
+        // 重置筛选
+        function resetFilters() {
+            document.getElementById('searchName').value = '';
+            document.getElementById('filterStatus').value = '';
+            document.getElementById('sortBy').value = 'createDate_desc';
+            filterQuestions();
+        }
+
+        // 渲染题单列表
+        function renderQuestionsList(questions) {
+            const container = document.getElementById('questionsList');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (questions.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            
+            container.innerHTML = questions.map((q, index) => {
+                let statusClass = 'status-pending';
+                let statusText = '未开始';
+                let statusIcon = '○';
+                
+                if (q.status === 'completed') {
+                    statusClass = 'status-completed';
+                    statusText = '已完成';
+                    statusIcon = '✓';
+                } else if (q.status === 'in_progress') {
+                    statusClass = 'status-progress';
+                    statusText = '进行中';
+                    statusIcon = '▶';
+                } else if (q.status === 'stopped') {
+                    statusClass = 'status-stopped';
+                    statusText = '已停止';
+                    statusIcon = '■';
+                }
+                
+                const createDate = q.createDate ? new Date(q.createDate).toLocaleDateString('zh-CN') : '-';
+                const completeDate = q.completeDate ? new Date(q.completeDate).toLocaleDateString('zh-CN') : '-';
+                
+                const canContinue = q.status !== 'stopped' && q.status !== 'completed';
+                const canViewDetail = q.status === 'completed' || (q.status === 'in_progress' && q.answeredCount > 0);
+                
+                return `
+                    <div class="glass-card rounded-2xl p-6 transition-all duration-300 fade-in" style="animation-delay: ${index * 0.05}s;">
+                        <div class="flex flex-col lg:flex-row lg:items-center gap-6">
+                            <!-- 左侧：标题和状态 -->
+                            <div class="flex-1">
+                                <div class="flex items-start gap-4">
+                                    <div class="w-12 h-12 rounded-xl ${statusClass} flex items-center justify-center text-lg font-bold flex-shrink-0">
+                                        ${statusIcon}
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <h3 class="text-lg font-semibold text-white mb-2 truncate">${q.title}</h3>
+                                        <div class="flex flex-wrap items-center gap-4 text-sm text-slate-400">
+                                            <span>📅 ${createDate}</span>
+                                            ${q.completeDate ? `<span>✓ ${completeDate}</span>` : ''}
+                                            <span>📝 ${q.answeredCount}/${q.totalQuestions} 题</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 中间：进度和状态 -->
+                            <div class="lg:w-56">
+                                <div class="flex justify-between text-sm mb-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-slate-400">完成进度</span>
+                                        <span class="px-2 py-0.5 rounded text-xs font-medium ${statusClass}">${statusText}</span>
+                                    </div>
+                                    <span class="text-indigo-400 font-medium">${q.progress}%</span>
+                                </div>
+                                <div class="h-2 bg-slate-700 rounded-full overflow-hidden">
+                                    <div class="progress-fill h-full rounded-full transition-all duration-500" style="width: ${q.progress}%"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- 右侧：分数和按钮 -->
+                            <div class="flex items-center gap-6">
+                                ${q.lastScore !== null ? `
+                                    <div class="text-center">
+                                        <p class="text-xs text-slate-400 mb-1">得分</p>
+                                        <p class="text-2xl font-bold score-display">${q.lastScore}</p>
+                                    </div>
+                                ` : '<div class="w-16"></div>'}
+                                
+                                <div class="flex items-center gap-2">
+                                    ${canViewDetail ? `
+                                        <button onclick="viewDetail('${q.id}')" 
+                                            class="btn-secondary px-4 py-2 rounded-lg text-sm font-medium">
+                                            详情
+                                        </button>
+                                    ` : ''}
+                                    ${q.status === 'stopped' ? `
+                                        <button onclick="startExam('${q.id}', true)" 
+                                            class="btn-secondary px-4 py-2 rounded-lg text-sm font-medium">
+                                            重测
+                                        </button>
+                                    ` : ''}
+                                    ${canContinue ? `
+                                        <button onclick="startExam('${q.id}', false)" 
+                                            class="btn-primary px-4 py-2 rounded-lg text-sm font-medium">
+                                            继续
+                                        </button>
+                                    ` : ''}
+                                    ${q.status === 'completed' ? `
+                                        <button onclick="startExam('${q.id}', true)" 
+                                            class="btn-primary px-4 py-2 rounded-lg text-sm font-medium">
+                                            重测
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 查看答题详情
+        function viewDetail(questionId) {
+            window.location.href = `/exam/${questionId}?readonly=true`;
         }
 
         // 开始考试
@@ -194,6 +623,7 @@
 
         // 页面加载时执行
         document.addEventListener('DOMContentLoaded', function() {
+            initParticles();
             loadUserInfo();
             loadQuestions();
         });

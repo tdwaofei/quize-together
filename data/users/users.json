@@ -1,0 +1,12 @@
+{
+  "ejf": {
+    "password": "likui",
+    "role": "student",
+    "name": "孩子"
+  },
+  "jiazhang": {
+    "password": "lujunyi",
+    "role": "parent",
+    "name": "家长"
+  }
+}

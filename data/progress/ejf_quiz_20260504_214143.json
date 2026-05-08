@@ -1,0 +1,19 @@
+{
+  "answers": {
+    "0": {
+      "selected": "C",
+      "correct": true,
+      "submitted": true
+    },
+    "1": {
+      "selected": "B",
+      "correct": true,
+      "submitted": true
+    }
+  },
+  "correctCount": 2,
+  "totalCount": 30,
+  "lastScore": 20,
+  "lastSubmitTime": "2026-05-04T21:52:39.462446",
+  "status": "in_progress"
+}
