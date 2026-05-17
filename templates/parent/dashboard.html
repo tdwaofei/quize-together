@@ -66,6 +66,19 @@
         <!-- 上传区域 -->
         <div class="bg-white rounded-2xl shadow-xl p-6 mb-6 fade-in">
             <h2 class="text-xl font-bold text-gray-800 mb-4">📤 上传新题单</h2>
+            <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                <div class="flex items-center gap-3">
+                    <span class="text-2xl">📋</span>
+                    <div class="flex-1">
+                        <p class="font-bold text-blue-800 mb-1">参考样例</p>
+                        <p class="text-sm text-blue-600 mb-2">下载题库格式样例文档，了解如何正确出题</p>
+                    </div>
+                    <a href="/static/kaotiyangli.md" download="kaotiyangli.md" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition flex items-center gap-2">
+                        <span>⬇️</span> 下载样例
+                    </a>
+                </div>
+            </div>
             <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center" id="uploadArea">
                 <div class="text-4xl mb-4">📄</div>
                 <p class="text-gray-600 mb-4">选择或拖拽.md格式的题库文件到此处</p>
@@ -205,20 +218,24 @@
                 
                 container.innerHTML = data.questions.map(q => {
                     const createDate = q.createDate ? new Date(q.createDate).toLocaleDateString('zh-CN') : '-';
+                    const isStopped = q.stopped === true;
                     
                     return `
-                        <div class="border rounded-xl p-6 hover:shadow-lg transition bg-white">
+                        <div class="border rounded-xl p-6 hover:shadow-lg transition ${isStopped ? 'bg-red-50 border-red-300' : 'bg-white'}">
                             <div class="flex justify-between items-start mb-4">
-                                <div>
-                                    <h3 class="text-lg font-bold text-gray-800">${q.title}</h3>
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="text-lg font-bold text-gray-800">${q.title}</h3>
+                                        ${isStopped ? '<span class="inline-block bg-red-100 text-red-600 text-xs font-bold px-2 py-1 rounded-full border border-red-300">⏹ 已停止作答</span>' : ''}
+                                    </div>
                                     <p class="text-sm text-gray-500 mt-1">${q.totalQuestions}道题 · 创建于 ${createDate}</p>
                                 </div>
                             </div>
                             
                             <div class="flex gap-3">
-                                <button onclick="stopExam('${q.id}')" 
-                                    class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition">
-                                    ⛔ 停止作答
+                                <button onclick="${isStopped ? `resumeExam('${q.id}')` : `stopExam('${q.id}')`}" 
+                                    class="flex-1 ${isStopped ? 'bg-green-500 hover:bg-green-600' : 'bg-yellow-500 hover:bg-yellow-600'} text-white font-bold py-2 px-4 rounded-lg transition">
+                                    ${isStopped ? '▶ 恢复作答' : '⛔ 停止作答'}
                                 </button>
                                 <button onclick="viewProgress('${q.id}')" 
                                     class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition">
@@ -307,11 +324,38 @@
                 
                 if (data.success) {
                     alert('已停止作答');
+                    loadQuestions(); // 刷新列表
                 } else {
                     alert('操作失败：' + data.message);
                 }
             } catch (error) {
                 console.error('停止失败:', error);
+                alert('操作失败');
+            }
+        }
+
+        // 恢复作答
+        async function resumeExam(questionId) {
+            if (!confirm('确定要恢复该题单的作答吗？')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/parent/questions/${questionId}/resume`, {
+                    method: 'POST',
+                    credentials: 'same-origin'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('已恢复作答');
+                    loadQuestions(); // 刷新列表
+                } else {
+                    alert('操作失败：' + data.message);
+                }
+            } catch (error) {
+                console.error('恢复失败:', error);
                 alert('操作失败');
             }
         }

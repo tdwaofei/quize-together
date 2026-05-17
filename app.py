@@ -264,7 +264,8 @@ def get_questions():
                 'progress': progress_percent,
                 'lastScore': progress_data.get('lastScore', None),
                 'completeDate': progress_data.get('completeDate', None),
-                'status': progress_data.get('status', 'not_started')  # not_started, in_progress, completed, stopped
+                'status': progress_data.get('status', 'not_started'),  # not_started, in_progress, completed, stopped
+                'stopped': data.get('stopped', False)  # 家长端是否已停止作答
             })
     
     # 按创建日期排序
@@ -291,6 +292,9 @@ def get_question_detail(question_id):
             progress_data = json.load(f)
         data['progress'] = progress_data
     
+    # 返回 stopped 状态（家长端是否已停止作答）
+    data['stopped'] = data.get('stopped', False)
+    
     return jsonify({'success': True, 'data': data})
 
 @app.route('/api/questions/<question_id>/submit', methods=['POST'])
@@ -307,6 +311,10 @@ def submit_answer(question_id):
     
     with open(filepath, 'r', encoding='utf-8') as f:
         question_data = json.load(f)
+    
+    # 检查是否已被家长停止作答
+    if question_data.get('stopped', False):
+        return jsonify({'success': False, 'message': '该题单已被停止作答，无法提交'}), 403
     
     # 计算得分
     correct_count = 0
@@ -358,6 +366,10 @@ def autosave_progress(question_id):
     
     with open(filepath, 'r', encoding='utf-8') as f:
         question_data = json.load(f)
+    
+    # 检查是否已被家长停止作答
+    if question_data.get('stopped', False):
+        return jsonify({'success': False, 'message': '该题单已被停止作答，无法保存进度'}), 403
     
     questions = question_data.get('questions', [])
     correct_count = 0
@@ -528,7 +540,43 @@ def stop_question(question_id):
             with open(filepath, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
     
+    # 在题目文件中标记为已停止
+    question_filepath = os.path.join(QUESTIONS_DIR, f"{question_id}.json")
+    if os.path.exists(question_filepath):
+        with open(question_filepath, 'r', encoding='utf-8') as f:
+            question_data = json.load(f)
+        question_data['stopped'] = True
+        with open(question_filepath, 'w', encoding='utf-8') as f:
+            json.dump(question_data, f, ensure_ascii=False, indent=2)
+    
     return jsonify({'success': True, 'message': '已停止作答'})
+
+@app.route('/api/parent/questions/<question_id>/resume', methods=['POST'])
+@login_required('parent')
+def resume_question(question_id):
+    """恢复作答"""
+    # 获取所有学生的进度文件并恢复状态
+    for filename in os.listdir(PROGRESS_DIR):
+        if filename.endswith(f"_{question_id}.json"):
+            filepath = os.path.join(PROGRESS_DIR, filename)
+            with open(filepath, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            # 已完成的不变，其他的恢复为进行中
+            if data.get('status') != 'completed':
+                data['status'] = 'in_progress'
+            with open(filepath, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+    
+    # 在题目文件中取消停止标记
+    question_filepath = os.path.join(QUESTIONS_DIR, f"{question_id}.json")
+    if os.path.exists(question_filepath):
+        with open(question_filepath, 'r', encoding='utf-8') as f:
+            question_data = json.load(f)
+        question_data['stopped'] = False
+        with open(question_filepath, 'w', encoding='utf-8') as f:
+            json.dump(question_data, f, ensure_ascii=False, indent=2)
+    
+    return jsonify({'success': True, 'message': '已恢复作答'})
 
 @app.route('/api/parent/progress/<question_id>', methods=['GET'])
 @login_required('parent')

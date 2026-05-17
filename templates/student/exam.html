@@ -6,6 +6,15 @@
     <title id="pageTitle">练习中 - 信息学竞赛练习系统</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- KaTeX for LaTeX math rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    <script>
+        // 测试 KaTeX 是否正确加载
+        console.log('KaTeX 加载测试 - katex:', typeof window.katex !== 'undefined' ? '已加载' : '未加载');
+        console.log('KaTeX 加载测试 - renderMathInElement:', typeof window.renderMathInElement !== 'undefined' ? '已加载' : '未加载');
+    </script>
     <style>
         body { font-family: 'Noto Sans SC', sans-serif; }
         .option-label { cursor: pointer; }
@@ -347,6 +356,8 @@
                     renderAllQuestions();
                     updateReadonlyStats();
                     renderQuestionIndexNav();
+                    // 渲染 LaTeX 数学公式（只读模式）
+                    setTimeout(renderAllMath, 150);
                 } else {
                     document.getElementById('totalNum').textContent = questions.length;
                     renderQuestionNav();
@@ -626,6 +637,9 @@
             }
             
             updateNavHighlight();
+            
+            // 渲染 LaTeX 数学公式
+            setTimeout(renderAllMath, 50);
         }
 
         function renderSingleChoiceOptions(container, q, index) {
@@ -745,6 +759,28 @@
 
         function formatContent(text) {
             if (!text) return '';
+            
+            // 1. 提取并保护 LaTeX 公式（防止被格式化处理破坏）
+            const latexFormulas = {};
+            let counter = 0;
+            
+            // 保护 $$...$$（块级公式）
+            text = text.replace(/\$\$[\s\S]*?\$\$/g, function(match) {
+                const placeholder = `__LATEX_${counter}__`;
+                latexFormulas[placeholder] = match;
+                counter++;
+                return placeholder;
+            });
+            
+            // 保护 $...$（行内公式）
+            text = text.replace(/\$[^$]+?\$/g, function(match) {
+                const placeholder = `__LATEX_${counter}__`;
+                latexFormulas[placeholder] = match;
+                counter++;
+                return placeholder;
+            });
+            
+            // 2. 处理格式（代码块、换行、加粗等）
             text = text.replace(/```cpp\n([\s\S]*?)```/g, function(match, code) {
                 return '<pre><code>' + escapeHtml(code) + '</code></pre>';
             });
@@ -756,7 +792,64 @@
             });
             text = text.replace(/\n/g, '<br>');
             text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            
+            // 3. 恢复 LaTeX 公式
+            for (const [placeholder, formula] of Object.entries(latexFormulas)) {
+                text = text.replace(placeholder, formula);
+            }
+            
             return text;
+        }
+
+        // 我们的渲染函数，避免与 KaTeX 的 renderMathInElement 冲突
+        function renderLaTeX(element) {
+            console.log('renderLaTeX 被调用, element:', element);
+            if (!element) {
+                console.error('renderLaTeX: element 为空');
+                return;
+            }
+            
+            console.log('window.renderMathInElement:', typeof window.renderMathInElement);
+            console.log('window.katex:', typeof window.katex);
+            
+            // 等待 KaTeX 加载完成
+            if (typeof window.renderMathInElement !== 'function') {
+                console.warn('KaTeX 尚未加载，等待100ms后重试...');
+                setTimeout(() => renderLaTeX(element), 100);
+                return;
+            }
+            
+            try {
+                console.log('开始 KaTeX 渲染...');
+                // 调用 KaTeX 的 renderMathInElement
+                window.renderMathInElement(element, {
+                    delimiters: [
+                        {left: '$$', right: '$$', display: true},
+                        {left: '$', right: '$', display: false}
+                    ],
+                    throwOnError: false
+                });
+                console.log('KaTeX 渲染完成');
+            } catch (e) {
+                console.error('KaTeX 渲染失败:', e);
+            }
+        }
+
+        // 渲染页面中所有数学公式
+        function renderAllMath() {
+            const elements = [
+                document.getElementById('questionContent'),
+                document.getElementById('optionsContainer'),
+                document.getElementById('solutionContent'),
+                document.getElementById('reviewContent'),
+                document.getElementById('allQuestionsList')
+            ];
+            
+            elements.forEach(el => {
+                if (el) {
+                    renderLaTeX(el);
+                }
+            });
         }
 
         function formatAnswer(answer, type) {
@@ -863,6 +956,9 @@
             document.getElementById('solutionContent').innerHTML = formatContent(q.solution);
             document.getElementById('pointContent').textContent = q.point;
             document.getElementById('reviewContent').innerHTML = formatContent(q.review);
+            
+            // 渲染 LaTeX 数学公式（答案解析区域）
+            setTimeout(renderAllMath, 50);
         }
 
         function highlightCorrectAnswer(q) {

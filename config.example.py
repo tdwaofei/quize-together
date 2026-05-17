@@ -6,15 +6,15 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, 'data')
 UPLOAD_DIR = os.path.join(BASE_DIR, 'static', 'uploads')
 
-# 用户配置
+# 用户配置 - 请根据需要修改
 USERS = {
     'haizi': {
-        'password': 'mima123',
+        'password': 'mima123',  # 修改为你想要的密码
         'role': 'student',
         'name': '孩子'
     },
     'jiazhang': {
-        'password': 'mima456',
+        'password': 'mima456',  # 修改为你想要的密码
         'role': 'parent',
         'name': '家长'
     }
@@ -32,5 +32,5 @@ os.makedirs(QUESTIONS_DIR, exist_ok=True)
 os.makedirs(PROGRESS_DIR, exist_ok=True)
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# 会话密钥 - 使用随机密钥
+# 会话密钥 - 自动生成随机密钥
 SECRET_KEY = secrets.token_hex(32)

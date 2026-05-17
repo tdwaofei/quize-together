@@ -567,19 +567,18 @@
                                             详情
                                         </button>
                                     ` : ''}
-                                    ${q.status === 'stopped' ? `
-                                        <button onclick="startExam('${q.id}', true)" 
-                                            class="btn-secondary px-4 py-2 rounded-lg text-sm font-medium">
-                                            重测
-                                        </button>
+                                    ${q.status === 'stopped' || q.stopped ? `
+                                        <span class="text-red-400 text-sm font-medium px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20">
+                                            ⏹ 已停止作答
+                                        </span>
                                     ` : ''}
-                                    ${canContinue ? `
+                                    ${canContinue && !q.stopped ? `
                                         <button onclick="startExam('${q.id}', false)" 
                                             class="btn-primary px-4 py-2 rounded-lg text-sm font-medium">
                                             继续
                                         </button>
                                     ` : ''}
-                                    ${q.status === 'completed' ? `
+                                    ${q.status === 'completed' && !q.stopped ? `
                                         <button onclick="startExam('${q.id}', true)" 
                                             class="btn-primary px-4 py-2 rounded-lg text-sm font-medium">
                                             重测

@@ -248,29 +248,65 @@ def detect_question_type(answer):
 
 def clean_markdown(text):
     """
-    清理markdown标记，但保留代码块格式
-    先提取代码块保护起来，避免代码中的*被误删为斜体标记
+    清理 markdown 标记，但保留代码块和 LaTeX 数学公式格式
+    先提取代码块和 LaTeX 公式保护起来，避免被误删
     """
     # 先提取并保护代码块
     text, code_blocks = extract_code_blocks(text)
+    
+    # 提取并保护 LaTeX 数学公式（包括 $...$ 和 $$...$$）
+    text, latex_formulas = extract_latex_formulas(text)
     
     # 移除加粗标记
     text = re.sub(r'\*\*', '', text)
     # 移除斜体标记
     text = re.sub(r'\*([^*]+)\*', r'\1', text)
-    # 移除details和summary标签（保留内部内容已在前面处理）
+    # 移除 details 和 summary 标签（保留内部内容已在前面处理）
     text = re.sub(r'<details>', '', text, flags=re.DOTALL)
     text = re.sub(r'</details>', '', text, flags=re.DOTALL)
     text = re.sub(r'<summary>.*?</summary>', '', text, flags=re.DOTALL)
-    # 清理HTML注释
+    # 清理 HTML 注释
     text = re.sub(r'<!--.*?-->', '', text, flags=re.DOTALL)
     # 清理多余的空行
     text = re.sub(r'\n{3,}', '\n\n', text)
+    
+    # 恢复 LaTeX 公式
+    text = restore_latex_formulas(text, latex_formulas)
     
     # 恢复代码块
     text = restore_code_blocks(text, code_blocks)
     
     return text.strip()
+
+def extract_latex_formulas(text):
+    """
+    提取 LaTeX 数学公式并保护起来
+    支持：$...$（行内公式）和 $$...$$（独立公式）
+    """
+    latex_formulas = {}
+    counter = 0
+    
+    def replace_latex(match):
+        nonlocal counter
+        placeholder = f"__LATEX_{counter}__"
+        latex_formulas[placeholder] = match.group(0)
+        counter += 1
+        return placeholder
+    
+    # 先保护独立公式 $$...$$（注意要匹配多行）
+    text = re.sub(r'\$\$[\s\S]*?\$\$', replace_latex, text)
+    # 再保护行内公式 $...$（注意排除单个$的情况）
+    text = re.sub(r'\$[^$]+?\$', replace_latex, text)
+    
+    return text, latex_formulas
+
+def restore_latex_formulas(text, latex_formulas):
+    """
+    恢复 LaTeX 数学公式
+    """
+    for placeholder, formula in latex_formulas.items():
+        text = text.replace(placeholder, formula)
+    return text
 
 def extract_code_blocks(text):
     """

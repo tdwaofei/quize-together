@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Data - 忽略用户数据，保护隐私
+data/
+static/uploads/
+
+# Config - 忽略真实配置文件
+config.py
+
+# Deployment artifacts
+exam_system.tar.gz
+*.bak
+*.swp
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
