@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的题单 - 信息学竞赛练习系统</title>
+    <title data-i18n="student_title">我的题单 - 信息学竞赛练习系统</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
@@ -206,6 +206,95 @@
         ::-webkit-scrollbar-thumb:hover {
             background: rgba(99, 102, 241, 0.7);
         }
+
+        /* 语言切换下拉菜单样式 - 深色主题 */
+        .lang-switcher {
+            position: relative;
+            display: inline-block;
+        }
+        .lang-switcher-btn-inner {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #e2e8f0;
+            padding: 6px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+        }
+        .lang-switcher-btn-inner:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        .lang-switcher-btn-inner svg {
+            width: 14px;
+            height: 14px;
+            transition: transform 0.3s ease;
+            color: #94a3b8;
+        }
+        .lang-switcher.open .lang-switcher-btn-inner svg {
+            transform: rotate(180deg);
+        }
+        .lang-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: #1e293b;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            min-width: 160px;
+            overflow: hidden;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .lang-switcher.open .lang-dropdown {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .lang-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #e2e8f0;
+            font-size: 14px;
+        }
+        .lang-option:hover {
+            background: rgba(99, 102, 241, 0.1);
+        }
+        .lang-option.active {
+            background: rgba(99, 102, 241, 0.2);
+            color: #818cf8;
+            font-weight: 600;
+        }
+        .lang-option .flag {
+            font-size: 18px;
+        }
+        .lang-option .check {
+            margin-left: auto;
+            opacity: 0;
+            color: #818cf8;
+            font-weight: bold;
+        }
+        .lang-option.active .check {
+            opacity: 1;
+        }
+        .lang-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 4px 0;
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -221,16 +310,39 @@
                         <span class="text-xl">⚡</span>
                     </div>
                     <div>
-                        <h1 class="text-lg font-bold text-white tracking-wide">信息学竞赛</h1>
-                        <p class="text-xs text-slate-400">练习系统</p>
+                        <h1 class="text-lg font-bold text-white tracking-wide" data-i18n="student_title">信息学竞赛</h1>
+                        <p class="text-xs text-slate-400" data-i18n="login_subtitle">练习系统</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-6">
+                    <!-- 语言切换 -->
+                    <div class="lang-switcher" id="langSwitcher">
+                        <button class="lang-switcher-btn-inner" onclick="toggleLangDropdown()">
+                            <span id="currentLangFlag">🇨🇳</span>
+                            <span id="currentLangText">简体中文</span>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="lang-dropdown">
+                            <div class="lang-option active" data-lang="zh-CN" onclick="switchLang('zh-CN')">
+                                <span class="flag">🇨🇳</span>
+                                <span>简体中文</span>
+                                <span class="check">✓</span>
+                            </div>
+                            <div class="lang-divider"></div>
+                            <div class="lang-option" data-lang="en" onclick="switchLang('en')">
+                                <span class="flag">🇺🇸</span>
+                                <span>English</span>
+                                <span class="check">✓</span>
+                            </div>
+                        </div>
+                    </div>
                     <div class="text-right">
-                        <p class="text-sm text-slate-300">欢迎回来</p>
+                        <p class="text-sm text-slate-300" data-i18n="welcome">欢迎回来</p>
                         <p class="text-xs text-indigo-400 font-medium" id="userName">学习者</p>
                     </div>
-                    <button onclick="logout()" class="btn-secondary px-4 py-2 rounded-lg text-sm font-medium">
+                    <button onclick="logout()" class="btn-secondary px-4 py-2 rounded-lg text-sm font-medium" data-i18n="nav_logout">
                         退出
                     </button>
                 </div>
@@ -243,26 +355,26 @@
         <div class="max-w-7xl mx-auto">
             <!-- 页面标题 -->
             <div class="mb-8 fade-in" style="animation-delay: 0.1s;">
-                <h2 class="text-3xl font-bold text-white mb-2">我的题单</h2>
-                <p class="text-slate-400">管理和追踪你的学习进度</p>
+                <h2 class="text-3xl font-bold text-white mb-2" data-i18n="student_title">我的题单</h2>
+                <p class="text-slate-400" data-i18n="student_subtitle">管理和追踪你的学习进度</p>
             </div>
             
             <!-- 统计卡片 -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 fade-in" style="animation-delay: 0.2s;">
                 <div class="glass-card rounded-2xl p-5">
-                    <p class="text-slate-400 text-sm mb-1">总题单</p>
+                    <p class="text-slate-400 text-sm mb-1" data-i18n="stat_total">总题单</p>
                     <p class="text-3xl font-bold text-white" id="statTotal">0</p>
                 </div>
                 <div class="glass-card rounded-2xl p-5">
-                    <p class="text-green-400 text-sm mb-1">已完成</p>
+                    <p class="text-green-400 text-sm mb-1" data-i18n="stat_completed">已完成</p>
                     <p class="text-3xl font-bold text-white" id="statCompleted">0</p>
                 </div>
                 <div class="glass-card rounded-2xl p-5">
-                    <p class="text-indigo-400 text-sm mb-1">进行中</p>
+                    <p class="text-indigo-400 text-sm mb-1" data-i18n="stat_progress">进行中</p>
                     <p class="text-3xl font-bold text-white" id="statProgress">0</p>
                 </div>
                 <div class="glass-card rounded-2xl p-5">
-                    <p class="text-amber-400 text-sm mb-1">平均分</p>
+                    <p class="text-amber-400 text-sm mb-1" data-i18n="stat_avg">平均分</p>
                     <p class="text-3xl font-bold text-white" id="statAvg">-</p>
                 </div>
             </div>
@@ -272,9 +384,9 @@
                 <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
                     <!-- 试题名称搜索 -->
                     <div class="md:col-span-5">
-                        <label class="block text-sm text-slate-400 mb-2">搜索题单</label>
+                        <label class="block text-sm text-slate-400 mb-2" data-i18n="search_label">搜索题单</label>
                         <div class="relative">
-                            <input type="text" id="searchName" placeholder="输入试题名称..." 
+                            <input type="text" id="searchName" data-i18n="search_placeholder" placeholder="输入试题名称..." 
                                 class="glass-input w-full px-4 py-3 rounded-xl text-sm"
                                 oninput="filterQuestions()">
                             <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500">🔍</span>
@@ -282,27 +394,27 @@
                     </div>
                     <!-- 完成状态筛选 -->
                     <div class="md:col-span-3">
-                        <label class="block text-sm text-slate-400 mb-2">完成状态</label>
+                        <label class="block text-sm text-slate-400 mb-2" data-i18n="filter_status">完成状态</label>
                         <select id="filterStatus" onchange="filterQuestions()" 
                             class="glass-input w-full px-4 py-3 rounded-xl text-sm cursor-pointer">
-                            <option value="" class="bg-slate-800">全部状态</option>
-                            <option value="not_started" class="bg-slate-800">未开始</option>
-                            <option value="in_progress" class="bg-slate-800">进行中</option>
-                            <option value="completed" class="bg-slate-800">已完成</option>
-                            <option value="stopped" class="bg-slate-800">已停止</option>
+                            <option value="" class="bg-slate-800" data-i18n="status_all">全部状态</option>
+                            <option value="not_started" class="bg-slate-800" data-i18n="status_not_started">未开始</option>
+                            <option value="in_progress" class="bg-slate-800" data-i18n="status_in_progress">进行中</option>
+                            <option value="completed" class="bg-slate-800" data-i18n="status_completed">已完成</option>
+                            <option value="stopped" class="bg-slate-800" data-i18n="status_stopped">已停止</option>
                         </select>
                     </div>
                     <!-- 排序方式 -->
                     <div class="md:col-span-3">
-                        <label class="block text-sm text-slate-400 mb-2">排序方式</label>
+                        <label class="block text-sm text-slate-400 mb-2" data-i18n="sort_label">排序方式</label>
                         <select id="sortBy" onchange="filterQuestions()" 
                             class="glass-input w-full px-4 py-3 rounded-xl text-sm cursor-pointer">
-                            <option value="createDate_desc" class="bg-slate-800">最新发布</option>
-                            <option value="createDate_asc" class="bg-slate-800">最早发布</option>
-                            <option value="name_asc" class="bg-slate-800">名称 A-Z</option>
-                            <option value="name_desc" class="bg-slate-800">名称 Z-A</option>
-                            <option value="score_desc" class="bg-slate-800">得分高到低</option>
-                            <option value="progress_desc" class="bg-slate-800">进度高到低</option>
+                            <option value="createDate_desc" class="bg-slate-800" data-i18n="sort_newest">最新发布</option>
+                            <option value="createDate_asc" class="bg-slate-800" data-i18n="sort_oldest">最早发布</option>
+                            <option value="name_asc" class="bg-slate-800" data-i18n="sort_name_asc">名称 A-Z</option>
+                            <option value="name_desc" class="bg-slate-800" data-i18n="sort_name_desc">名称 Z-A</option>
+                            <option value="score_desc" class="bg-slate-800" data-i18n="sort_score">得分高到低</option>
+                            <option value="progress_desc" class="bg-slate-800" data-i18n="sort_progress">进度高到低</option>
                         </select>
                     </div>
                     <!-- 重置按钮 -->
@@ -320,21 +432,22 @@
                 <!-- 动态加载 -->
                 <div class="text-center py-16 text-slate-500">
                     <div class="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p>加载中...</p>
+                    <p data-i18n="loading">加载中...</p>
                 </div>
             </div>
             
             <!-- 空状态提示 -->
             <div id="emptyState" class="hidden text-center py-16 fade-in">
                 <div class="text-6xl mb-4">📭</div>
-                <p class="text-slate-400 text-lg">没有找到符合条件的题单</p>
-                <button onclick="resetFilters()" class="mt-4 text-indigo-400 hover:text-indigo-300 text-sm">
+                <p class="text-slate-400 text-lg" data-i18n="empty_title">没有找到符合条件的题单</p>
+                <button onclick="resetFilters()" class="mt-4 text-indigo-400 hover:text-indigo-300 text-sm" data-i18n="clear_filters">
                     清除筛选条件
                 </button>
             </div>
         </div>
     </div>
 
+    <script src="/static/js/i18n.js"></script>
     <script>
         let allQuestions = [];
         
@@ -372,13 +485,13 @@
                 
                 if (!data.success) {
                     document.getElementById('questionsList').innerHTML = 
-                        '<div class="text-center py-12 text-red-400">加载失败，请刷新重试</div>';
+                        '<div class="text-center py-12 text-red-400">' + t('load_error') + '</div>';
                     return;
                 }
                 
                 if (data.questions.length === 0) {
                     document.getElementById('questionsList').innerHTML = 
-                        '<div class="text-center py-12 text-slate-500">暂无题单，请等待家长上传</div>';
+                        '<div class="text-center py-12 text-slate-500">' + t('no_questions') + '</div>';
                     return;
                 }
                 
@@ -389,7 +502,7 @@
             } catch (error) {
                 console.error('加载题单失败:', error);
                 document.getElementById('questionsList').innerHTML = 
-                    '<div class="text-center py-12 text-red-400">加载失败，请刷新重试</div>';
+                    '<div class="text-center py-12 text-red-400">' + t('load_error') + '</div>';
             }
         }
 
@@ -494,25 +607,25 @@
             
             container.innerHTML = questions.map((q, index) => {
                 let statusClass = 'status-pending';
-                let statusText = '未开始';
+                let statusText = t('status_not_started');
                 let statusIcon = '○';
                 
                 if (q.status === 'completed') {
                     statusClass = 'status-completed';
-                    statusText = '已完成';
+                    statusText = t('status_completed');
                     statusIcon = '✓';
                 } else if (q.status === 'in_progress') {
                     statusClass = 'status-progress';
-                    statusText = '进行中';
+                    statusText = t('status_in_progress');
                     statusIcon = '▶';
                 } else if (q.status === 'stopped') {
                     statusClass = 'status-stopped';
-                    statusText = '已停止';
+                    statusText = t('status_stopped');
                     statusIcon = '■';
                 }
                 
-                const createDate = q.createDate ? new Date(q.createDate).toLocaleDateString('zh-CN') : '-';
-                const completeDate = q.completeDate ? new Date(q.completeDate).toLocaleDateString('zh-CN') : '-';
+                const createDate = q.createDate ? new Date(q.createDate).toLocaleDateString(currentLang === 'zh-CN' ? 'zh-CN' : 'en-US') : '-';
+                const completeDate = q.completeDate ? new Date(q.completeDate).toLocaleDateString(currentLang === 'zh-CN' ? 'zh-CN' : 'en-US') : '-';
                 
                 const canContinue = q.status !== 'stopped' && q.status !== 'completed';
                 const canViewDetail = q.status === 'completed' || (q.status === 'in_progress' && q.answeredCount > 0);
@@ -531,7 +644,7 @@
                                         <div class="flex flex-wrap items-center gap-4 text-sm text-slate-400">
                                             <span>📅 ${createDate}</span>
                                             ${q.completeDate ? `<span>✓ ${completeDate}</span>` : ''}
-                                            <span>📝 ${q.answeredCount}/${q.totalQuestions} 题</span>
+                                            <span>📝 ${q.answeredCount}/${q.totalQuestions} ${t('question_count')}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -541,7 +654,7 @@
                             <div class="lg:w-56">
                                 <div class="flex justify-between text-sm mb-2">
                                     <div class="flex items-center gap-2">
-                                        <span class="text-slate-400">完成进度</span>
+                                        <span class="text-slate-400">${t('progress_label')}</span>
                                         <span class="px-2 py-0.5 rounded text-xs font-medium ${statusClass}">${statusText}</span>
                                     </div>
                                     <span class="text-indigo-400 font-medium">${q.progress}%</span>
@@ -555,7 +668,7 @@
                             <div class="flex items-center gap-6">
                                 ${q.lastScore !== null ? `
                                     <div class="text-center">
-                                        <p class="text-xs text-slate-400 mb-1">得分</p>
+                                        <p class="text-xs text-slate-400 mb-1">${t('score_label')}</p>
                                         <p class="text-2xl font-bold score-display">${q.lastScore}</p>
                                     </div>
                                 ` : '<div class="w-16"></div>'}
@@ -564,24 +677,24 @@
                                     ${canViewDetail ? `
                                         <button onclick="viewDetail('${q.id}')" 
                                             class="btn-secondary px-4 py-2 rounded-lg text-sm font-medium">
-                                            详情
+                                            ${t('detail_btn')}
                                         </button>
                                     ` : ''}
                                     ${q.status === 'stopped' || q.stopped ? `
                                         <span class="text-red-400 text-sm font-medium px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20">
-                                            ⏹ 已停止作答
+                                            ⏹ ${t('stopped_label')}
                                         </span>
                                     ` : ''}
                                     ${canContinue && !q.stopped ? `
                                         <button onclick="startExam('${q.id}', false)" 
                                             class="btn-primary px-4 py-2 rounded-lg text-sm font-medium">
-                                            继续
+                                            ${t('continue_btn')}
                                         </button>
                                     ` : ''}
                                     ${q.status === 'completed' && !q.stopped ? `
                                         <button onclick="startExam('${q.id}', true)" 
                                             class="btn-primary px-4 py-2 rounded-lg text-sm font-medium">
-                                            重测
+                                            ${t('retest_btn')}
                                         </button>
                                     ` : ''}
                                 </div>
@@ -600,7 +713,7 @@
         // 开始考试
         function startExam(questionId, restart) {
             if (restart) {
-                if (!confirm('重新作答将清除之前的进度，确定吗？')) {
+                if (!confirm(t('confirm_retest'))) {
                     return;
                 }
             }
@@ -620,8 +733,51 @@
             }
         }
 
+        // 语言切换下拉菜单功能
+        function toggleLangDropdown() {
+            const switcher = document.getElementById('langSwitcher');
+            switcher.classList.toggle('open');
+        }
+
+        function switchLang(lang) {
+            currentLang = lang;
+            localStorage.setItem('lang', currentLang);
+            document.getElementById('langSwitcher').classList.remove('open');
+            location.reload();
+        }
+
+        function updateLangDisplay() {
+            const flag = document.getElementById('currentLangFlag');
+            const text = document.getElementById('currentLangText');
+            
+            if (currentLang === 'zh-CN') {
+                flag.textContent = '🇨🇳';
+                text.textContent = '简体中文';
+            } else {
+                flag.textContent = '🇺🇸';
+                text.textContent = 'English';
+            }
+            
+            document.querySelectorAll('.lang-option').forEach(opt => {
+                if (opt.dataset.lang === currentLang) {
+                    opt.classList.add('active');
+                } else {
+                    opt.classList.remove('active');
+                }
+            });
+        }
+
+        document.addEventListener('click', function(e) {
+            const switcher = document.getElementById('langSwitcher');
+            if (!switcher.contains(e.target)) {
+                switcher.classList.remove('open');
+            }
+        });
+
         // 页面加载时执行
         document.addEventListener('DOMContentLoaded', function() {
+            updateLangDisplay();
+            updatePageText();
             initParticles();
             loadUserInfo();
             loadQuestions();

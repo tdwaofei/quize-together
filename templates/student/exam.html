@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="pageTitle">练习中 - 信息学竞赛练习系统</title>
+    <title id="pageTitle" data-i18n="exam_title">练习中 - 信息学竞赛练习系统</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
     <!-- KaTeX for LaTeX math rendering -->
@@ -36,6 +36,32 @@
         .type-badge-single { background-color: #dbeafe; color: #1d4ed8; }
         .type-badge-multiple { background-color: #fef3c7; color: #b45309; }
         .type-badge-truefalse { background-color: #fce7f3; color: #be185d; }
+        
+        /* 语言切换下拉菜单样式 */
+        .lang-switcher { position: relative; display: inline-block; }
+        .lang-switcher-btn-inner {
+            background: #f3f4f6; border: 1px solid #e5e7eb; color: #374151;
+            padding: 6px 12px; border-radius: 10px; cursor: pointer;
+            font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px;
+            transition: all 0.3s ease;
+        }
+        .lang-switcher-btn-inner:hover { background: #e5e7eb; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .lang-switcher.open .lang-switcher-btn-inner svg { transform: rotate(180deg); }
+        .lang-dropdown {
+            position: absolute; top: calc(100% + 8px); right: 0; background: white;
+            border: 1px solid #e5e7eb; border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2); min-width: 160px; overflow: hidden;
+            opacity: 0; visibility: hidden; transform: translateY(-10px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 100;
+        }
+        .lang-switcher.open .lang-dropdown { opacity: 1; visibility: visible; transform: translateY(0); }
+        .lang-option { display: flex; align-items: center; gap: 10px; padding: 12px 16px; cursor: pointer; transition: all 0.2s ease; color: #374151; font-size: 14px; }
+        .lang-option:hover { background: #f3f4f6; }
+        .lang-option.active { background: #eef2ff; color: #4f46e5; font-weight: 600; }
+        .lang-option .flag { font-size: 18px; }
+        .lang-option .check { margin-left: auto; opacity: 0; color: #4f46e5; font-weight: bold; }
+        .lang-option.active .check { opacity: 1; }
+        .lang-divider { height: 1px; background: #e5e7eb; margin: 4px 0; }
         
         /* 只读模式样式 */
         .readonly-mode .option-label,
@@ -150,12 +176,35 @@
     <nav class="bg-white shadow-md">
         <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
             <div class="flex items-center gap-2">
-                <button onclick="goBack()" class="text-gray-600 hover:text-gray-800">
+                <button onclick="goBack()" class="text-gray-600 hover:text-gray-800" data-i18n="back_btn">
                     ← 返回
                 </button>
-                <span class="text-xl font-bold text-gray-800" id="examTitle">练习</span>
+                <span class="text-xl font-bold text-gray-800" id="examTitle" data-i18n="exam_title">练习</span>
             </div>
             <div class="flex items-center gap-4" id="navRight">
+                <!-- 语言切换 -->
+                <div class="lang-switcher" id="langSwitcher">
+                    <button class="lang-switcher-btn-inner" onclick="toggleLangDropdown()">
+                        <span id="currentLangFlag">🇨🇳</span>
+                        <span id="currentLangText">简体中文</span>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div class="lang-dropdown">
+                        <div class="lang-option active" data-lang="zh-CN" onclick="switchLang('zh-CN')">
+                            <span class="flag">🇨🇳</span>
+                            <span>简体中文</span>
+                            <span class="check">✓</span>
+                        </div>
+                        <div class="lang-divider"></div>
+                        <div class="lang-option" data-lang="en" onclick="switchLang('en')">
+                            <span class="flag">🇺🇸</span>
+                            <span>English</span>
+                            <span class="check">✓</span>
+                        </div>
+                    </div>
+                </div>
                 <!-- 动态内容 -->
             </div>
         </div>
@@ -169,8 +218,8 @@
                 <div id="progressBar" class="bg-indigo-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
             </div>
             <div class="flex justify-between mt-2 text-xs text-gray-500">
-                <span>已完成: <span id="answeredCount" class="font-bold text-green-600">0</span></span>
-                <span>当前得分: <span id="currentScore" class="font-bold text-indigo-600">0</span></span>
+                <span><span data-i18n="answered_label">已完成</span>: <span id="answeredCount" class="font-bold text-green-600">0</span></span>
+                <span><span data-i18n="current_score">当前得分</span>: <span id="currentScore" class="font-bold text-indigo-600">0</span></span>
             </div>
         </div>
 
@@ -187,10 +236,10 @@
             <div id="optionsContainer" class="space-y-3 mb-6"></div>
 
             <div id="actionButtons" class="flex gap-4">
-                <button onclick="submitAnswer()" id="submitBtn" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-xl transition shadow-md">
+                <button onclick="submitAnswer()" id="submitBtn" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-xl transition shadow-md" data-i18n="submit_answer">
                     ✅ 提交答案
                 </button>
-                <button onclick="skipQuestion()" id="skipBtn" class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-xl transition shadow-md">
+                <button onclick="skipQuestion()" id="skipBtn" class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-xl transition shadow-md" data-i18n="skip_question">
                     ⏭️ 暂时跳过
                 </button>
             </div>
@@ -199,26 +248,26 @@
                 <div id="resultBadge" class="text-center mb-4"></div>
                 
                 <div class="bg-gray-50 rounded-xl p-4 mb-4">
-                    <h4 class="font-bold text-gray-800 mb-2">📋 正确答案</h4>
+                    <h4 class="font-bold text-gray-800 mb-2" data-i18n="correct_answer_label">📋 正确答案</h4>
                     <p id="correctAnswer" class="text-lg font-bold text-green-600"></p>
                 </div>
 
                 <div class="bg-blue-50 rounded-xl p-4 mb-4">
-                    <h4 class="font-bold text-gray-800 mb-2">💡 解题过程</h4>
+                    <h4 class="font-bold text-gray-800 mb-2" data-i18n="solution_label">💡 解题过程</h4>
                     <div id="solutionContent" class="text-gray-700 text-sm leading-relaxed question-text"></div>
                 </div>
 
                 <div class="bg-purple-50 rounded-xl p-4 mb-4">
-                    <h4 class="font-bold text-gray-800 mb-2">🎯 本题考点</h4>
+                    <h4 class="font-bold text-gray-800 mb-2" data-i18n="key_points_label">🎯 本题考点</h4>
                     <p id="pointContent" class="text-gray-700 text-sm"></p>
                 </div>
 
                 <div class="bg-orange-50 rounded-xl p-4">
-                    <h4 class="font-bold text-gray-800 mb-2">📚 复习要点</h4>
+                    <h4 class="font-bold text-gray-800 mb-2" data-i18n="review_label">📚 复习要点</h4>
                     <div id="reviewContent" class="text-gray-700 text-sm leading-relaxed question-text"></div>
                 </div>
 
-                <button onclick="nextQuestion()" class="w-full mt-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl transition shadow-md">
+                <button onclick="nextQuestion()" class="w-full mt-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl transition shadow-md" data-i18n="next_question">
                     下一题 →
                 </button>
             </div>
@@ -226,7 +275,7 @@
 
         <!-- 题目导航 -->
         <div id="navSection" class="bg-white rounded-xl shadow-md p-4 mt-6">
-            <h4 class="font-bold text-gray-800 mb-3">题目导航</h4>
+            <h4 class="font-bold text-gray-800 mb-3" data-i18n="question_nav">题目导航</h4>
             <div id="questionNav" class="flex flex-wrap gap-2">
                 <!-- 动态生成 -->
             </div>
@@ -240,26 +289,26 @@
             <div class="grid grid-cols-4 gap-4 text-center">
                 <div>
                     <div class="text-2xl font-bold text-gray-800" id="statTotal">0</div>
-                    <div class="text-xs text-gray-500">总题数</div>
+                    <div class="text-xs text-gray-500" data-i18n="stat_total_questions">总题数</div>
                 </div>
                 <div>
                     <div class="text-2xl font-bold text-green-600" id="statCorrect">0</div>
-                    <div class="text-xs text-gray-500">答对</div>
+                    <div class="text-xs text-gray-500" data-i18n="stat_correct">答对</div>
                 </div>
                 <div>
                     <div class="text-2xl font-bold text-red-600" id="statWrong">0</div>
-                    <div class="text-xs text-gray-500">答错</div>
+                    <div class="text-xs text-gray-500" data-i18n="stat_wrong">答错</div>
                 </div>
                 <div>
                     <div class="text-2xl font-bold text-indigo-600" id="statScore">0</div>
-                    <div class="text-xs text-gray-500">得分</div>
+                    <div class="text-xs text-gray-500" data-i18n="stat_score">得分</div>
                 </div>
             </div>
         </div>
         
         <!-- 题目序号导航 -->
         <div class="bg-white rounded-xl shadow-md p-4 mb-6">
-            <h4 class="font-bold text-gray-800 mb-2 text-sm">题目导航（点击跳转，悬停预览）</h4>
+            <h4 class="font-bold text-gray-800 mb-2 text-sm" data-i18n="question_index_nav">题目导航（点击跳转，悬停预览）</h4>
             <div id="questionIndexNav" class="question-index-nav">
                 <!-- 动态生成 -->
             </div>
@@ -272,12 +321,13 @@
         
         <!-- 底部按钮 -->
         <div class="flex justify-center gap-4 mt-8 mb-8">
-            <button onclick="goBack()" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded-xl transition shadow-md">
+            <button onclick="goBack()" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded-xl transition shadow-md" data-i18n="back_to_list">
                 返回题单
             </button>
         </div>
     </div>
 
+    <script src="/static/js/i18n.js"></script>
     <script>
         const questionId = '{{ question_id }}';
         let questions = [];
@@ -1092,8 +1142,51 @@
             }
         }
 
+        // 语言切换下拉菜单功能
+        function toggleLangDropdown() {
+            const switcher = document.getElementById('langSwitcher');
+            switcher.classList.toggle('open');
+        }
+
+        function switchLang(lang) {
+            currentLang = lang;
+            localStorage.setItem('lang', currentLang);
+            document.getElementById('langSwitcher').classList.remove('open');
+            location.reload();
+        }
+
+        function updateLangDisplay() {
+            const flag = document.getElementById('currentLangFlag');
+            const text = document.getElementById('currentLangText');
+            
+            if (currentLang === 'zh-CN') {
+                flag.textContent = '🇨🇳';
+                text.textContent = '简体中文';
+            } else {
+                flag.textContent = '🇺🇸';
+                text.textContent = 'English';
+            }
+            
+            document.querySelectorAll('.lang-option').forEach(opt => {
+                if (opt.dataset.lang === currentLang) {
+                    opt.classList.add('active');
+                } else {
+                    opt.classList.remove('active');
+                }
+            });
+        }
+
+        document.addEventListener('click', function(e) {
+            const switcher = document.getElementById('langSwitcher');
+            if (switcher && !switcher.contains(e.target)) {
+                switcher.classList.remove('open');
+            }
+        });
+
         // 页面加载
         document.addEventListener('DOMContentLoaded', function() {
+            updateLangDisplay();
+            updatePageText();
             checkReadonlyMode();
             loadExam();
         });

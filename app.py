@@ -124,7 +124,8 @@ def login():
             return jsonify({
                 'success': True,
                 'role': user['role'],
-                'name': user['name']
+                'name': user['name'],
+                'redirect': '/parent'
             })
     
     # 学生使用动态密码（密码题答案的拼音）
@@ -144,7 +145,8 @@ def login():
             return jsonify({
                 'success': True,
                 'role': user['role'],
-                'name': user['name']
+                'name': user['name'],
+                'redirect': '/student'
             })
     
     return jsonify({'success': False, 'message': '用户名或密码错误'}), 401

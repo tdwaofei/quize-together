@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>题单管理 - 信息学竞赛练习系统</title>
+    <title data-i18n="parent_title">题单管理 - 信息学竞赛练习系统</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
@@ -11,6 +11,32 @@
         .fade-in { animation: fadeIn 0.5s ease-in; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .progress-bar { transition: width 0.5s ease; }
+        
+        /* 语言切换下拉菜单样式 */
+        .lang-switcher { position: relative; display: inline-block; }
+        .lang-switcher-btn-inner {
+            background: #f3f4f6; border: 1px solid #e5e7eb; color: #374151;
+            padding: 6px 12px; border-radius: 10px; cursor: pointer;
+            font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px;
+            transition: all 0.3s ease;
+        }
+        .lang-switcher-btn-inner:hover { background: #e5e7eb; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .lang-switcher.open .lang-switcher-btn-inner svg { transform: rotate(180deg); }
+        .lang-dropdown {
+            position: absolute; top: calc(100% + 8px); right: 0; background: white;
+            border: 1px solid #e5e7eb; border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2); min-width: 160px; overflow: hidden;
+            opacity: 0; visibility: hidden; transform: translateY(-10px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 100;
+        }
+        .lang-switcher.open .lang-dropdown { opacity: 1; visibility: visible; transform: translateY(0); }
+        .lang-option { display: flex; align-items: center; gap: 10px; padding: 12px 16px; cursor: pointer; transition: all 0.2s ease; color: #374151; font-size: 14px; }
+        .lang-option:hover { background: #f3f4f6; }
+        .lang-option.active { background: #eef2ff; color: #4f46e5; font-weight: 600; }
+        .lang-option .flag { font-size: 18px; }
+        .lang-option .check { margin-left: auto; opacity: 0; color: #4f46e5; font-weight: bold; }
+        .lang-option.active .check { opacity: 1; }
+        .lang-divider { height: 1px; background: #e5e7eb; margin: 4px 0; }
     </style>
 </head>
 <body class="bg-gradient-to-br from-purple-50 to-pink-100 min-h-screen">
@@ -19,11 +45,34 @@
         <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
             <div class="flex items-center gap-2">
                 <span class="text-2xl">📚</span>
-                <h1 class="text-xl font-bold text-gray-800">信息学竞赛练习系统 - 管理后台</h1>
+                <h1 class="text-xl font-bold text-gray-800" data-i18n="parent_title">信息学竞赛练习系统 - 管理后台</h1>
             </div>
             <div class="flex items-center gap-4">
-                <span class="text-gray-600">欢迎，<span id="userName">家长</span></span>
-                <button onclick="logout()" class="text-red-500 hover:text-red-700 font-medium">退出</button>
+                <!-- 语言切换 -->
+                <div class="lang-switcher" id="langSwitcher">
+                    <button class="lang-switcher-btn-inner" onclick="toggleLangDropdown()">
+                        <span id="currentLangFlag">🇨🇳</span>
+                        <span id="currentLangText">简体中文</span>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div class="lang-dropdown">
+                        <div class="lang-option active" data-lang="zh-CN" onclick="switchLang('zh-CN')">
+                            <span class="flag">🇨🇳</span>
+                            <span>简体中文</span>
+                            <span class="check">✓</span>
+                        </div>
+                        <div class="lang-divider"></div>
+                        <div class="lang-option" data-lang="en" onclick="switchLang('en')">
+                            <span class="flag">🇺🇸</span>
+                            <span>English</span>
+                            <span class="check">✓</span>
+                        </div>
+                    </div>
+                </div>
+                <span class="text-gray-600"><span data-i18n="welcome">欢迎</span>，<span id="userName">家长</span></span>
+                <button onclick="logout()" class="text-red-500 hover:text-red-700 font-medium" data-i18n="nav_logout">退出</button>
             </div>
         </div>
     </nav>
@@ -32,31 +81,32 @@
     <div class="max-w-6xl mx-auto px-4 py-8">
         <!-- 密码题设置区域 -->
         <div class="bg-white rounded-2xl shadow-xl p-6 mb-6 fade-in">
-            <h2 class="text-xl font-bold text-gray-800 mb-4">🔑 设置登录密码题</h2>
-            <p class="text-sm text-gray-500 mb-4">设置一道题目，答案的汉语拼音将作为孩子的登录密码</p>
+            <h2 class="text-xl font-bold text-gray-800 mb-4" data-i18n="password_question_title">🔑 设置登录密码题</h2>
+            <p class="text-sm text-gray-500 mb-4" data-i18n="password_question_desc">设置一道题目，答案的汉语拼音将作为孩子的登录密码</p>
             
             <div id="currentPasswordQuestion" class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4 hidden">
-                <p class="font-bold text-gray-700">当前密码题：</p>
+                <p class="font-bold text-gray-700" data-i18n="current_password_question">当前密码题：</p>
                 <p id="currentQuestionText" class="text-indigo-700 mt-1"></p>
                 <p id="currentAnswerText" class="text-sm text-gray-500 mt-1"></p>
             </div>
             
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">问题（例如：昨天读的水浒传人物是谁？）</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2" data-i18n="question_label">问题（例如：昨天读的水浒传人物是谁？）</label>
                     <input type="text" id="passwordQuestion" 
                         class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-                        placeholder="输入密码题">
+                        data-i18n="question_placeholder" placeholder="输入密码题">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">答案（例如：李逵）</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2" data-i18n="answer_label">答案（例如：李逵）</label>
                     <input type="text" id="passwordAnswer" 
                         class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-                        placeholder="输入答案">
-                    <p class="text-xs text-gray-500 mt-1">💡 系统会自动将答案转换为拼音作为密码（如"李逵"→"likui"）</p>
+                        data-i18n="answer_placeholder" placeholder="输入答案">
+                    <p class="text-xs text-gray-500 mt-1" data-i18n="answer_tip">💡 系统会自动将答案转换为拼音作为密码（如"李逵"→"likui"）</p>
                 </div>
                 <button onclick="setPasswordQuestion()" 
-                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl transition">
+                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl transition"
+                    data-i18n="set_password_btn">
                     设置密码题
                 </button>
                 <div id="passwordSetStatus" class="hidden"></div>
@@ -65,27 +115,28 @@
 
         <!-- 上传区域 -->
         <div class="bg-white rounded-2xl shadow-xl p-6 mb-6 fade-in">
-            <h2 class="text-xl font-bold text-gray-800 mb-4">📤 上传新题单</h2>
+            <h2 class="text-xl font-bold text-gray-800 mb-4" data-i18n="upload_title">📤 上传新题单</h2>
             <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
                 <div class="flex items-center gap-3">
                     <span class="text-2xl">📋</span>
                     <div class="flex-1">
-                        <p class="font-bold text-blue-800 mb-1">参考样例</p>
-                        <p class="text-sm text-blue-600 mb-2">下载题库格式样例文档，了解如何正确出题</p>
+                        <p class="font-bold text-blue-800 mb-1" data-i18n="sample_reference">参考样例</p>
+                        <p class="text-sm text-blue-600 mb-2" data-i18n="sample_desc">下载题库格式样例文档，了解如何正确出题</p>
                     </div>
                     <a href="/static/kaotiyangli.md" download="kaotiyangli.md" 
                         class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition flex items-center gap-2">
-                        <span>⬇️</span> 下载样例
+                        <span>⬇️</span> <span data-i18n="download_sample">下载样例</span>
                     </a>
                 </div>
             </div>
             <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center" id="uploadArea">
                 <div class="text-4xl mb-4">📄</div>
-                <p class="text-gray-600 mb-4">选择或拖拽.md格式的题库文件到此处</p>
-                <p class="text-sm text-gray-400 mb-4">文件需包含：题的名字、题目、答案、解题过程、本题考点、复习要点</p>
+                <p class="text-gray-600 mb-4" data-i18n="upload_desc">选择或拖拽.md格式的题库文件到此处</p>
+                <p class="text-sm text-gray-400 mb-4" data-i18n="upload_requirements">文件需包含：题的名字、题目、答案、解题过程、本题考点、复习要点</p>
                 <input type="file" id="fileInput" accept=".md" class="hidden" onchange="handleFileSelect(event)">
                 <button onclick="document.getElementById('fileInput').click()" 
-                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg transition">
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg transition"
+                    data-i18n="upload_btn">
                     选择文件
                 </button>
             </div>
@@ -94,10 +145,10 @@
 
         <!-- 题单列表 -->
         <div class="bg-white rounded-2xl shadow-xl p-6 fade-in">
-            <h2 class="text-xl font-bold text-gray-800 mb-6">📋 题单管理</h2>
+            <h2 class="text-xl font-bold text-gray-800 mb-6" data-i18n="manage_title">📋 题单管理</h2>
             
             <div id="questionsList" class="space-y-4">
-                <div class="text-center py-12 text-gray-500">加载中...</div>
+                <div class="text-center py-12 text-gray-500" data-i18n="loading">加载中...</div>
             </div>
         </div>
     </div>
@@ -106,7 +157,7 @@
     <div id="progressModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
         <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-2xl m-4 max-h-[80vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-bold text-gray-800">完成情况详情</h3>
+                <h3 class="text-xl font-bold text-gray-800" data-i18n="progress_detail">完成情况详情</h3>
                 <button onclick="closeProgressModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
             </div>
             <div id="progressContent">
@@ -115,6 +166,7 @@
         </div>
     </div>
 
+    <script src="/static/js/i18n.js"></script>
     <script>
         // 加载用户信息
         async function loadUserInfo() {
@@ -142,7 +194,7 @@
                 if (data.hasQuestion) {
                     container.classList.remove('hidden');
                     questionText.textContent = data.question;
-                    answerText.textContent = `设置时间：${new Date(data.setTime).toLocaleString('zh-CN')}`;
+                    answerText.textContent = `${t('set_time')}${new Date(data.setTime).toLocaleString(currentLang === 'zh-CN' ? 'zh-CN' : 'en-US')}`;
                 } else {
                     container.classList.add('hidden');
                 }
@@ -159,7 +211,7 @@
             
             if (!question || !answer) {
                 statusDiv.className = 'p-4 rounded-lg bg-red-100 text-red-700';
-                statusDiv.textContent = '请输入问题和答案';
+                statusDiv.textContent = t('fill_all_fields');
                 statusDiv.classList.remove('hidden');
                 return;
             }
@@ -176,24 +228,22 @@
                 
                 if (data.success) {
                     statusDiv.className = 'p-4 rounded-lg bg-green-100 text-green-700';
-                    statusDiv.textContent = `密码题设置成功！密码为：${data.answerPinyin}`;
+                    statusDiv.textContent = t('password_set_success') + data.answerPinyin;
                     statusDiv.classList.remove('hidden');
                     
-                    // 清空输入框
                     document.getElementById('passwordQuestion').value = '';
                     document.getElementById('passwordAnswer').value = '';
                     
-                    // 刷新当前密码题显示
                     loadCurrentPasswordQuestion();
                 } else {
                     statusDiv.className = 'p-4 rounded-lg bg-red-100 text-red-700';
-                    statusDiv.textContent = '设置失败：' + data.message;
+                    statusDiv.textContent = t('set_failed') + data.message;
                     statusDiv.classList.remove('hidden');
                 }
             } catch (error) {
                 console.error('设置密码题失败:', error);
                 statusDiv.className = 'p-4 rounded-lg bg-red-100 text-red-700';
-                statusDiv.textContent = '设置失败，请重试';
+                statusDiv.textContent = t('set_failed_retry');
                 statusDiv.classList.remove('hidden');
             }
         }
@@ -207,17 +257,17 @@
                 const container = document.getElementById('questionsList');
                 
                 if (!data.success) {
-                    container.innerHTML = '<div class="text-center py-12 text-red-500">加载失败，请刷新重试</div>';
+                    container.innerHTML = '<div class="text-center py-12 text-red-500">' + t('load_error') + '</div>';
                     return;
                 }
                 
                 if (data.questions.length === 0) {
-                    container.innerHTML = '<div class="text-center py-12 text-gray-500">暂无题单，请上传.md文件</div>';
+                    container.innerHTML = '<div class="text-center py-12 text-gray-500">' + t('no_questions_parent') + '</div>';
                     return;
                 }
                 
                 container.innerHTML = data.questions.map(q => {
-                    const createDate = q.createDate ? new Date(q.createDate).toLocaleDateString('zh-CN') : '-';
+                    const createDate = q.createDate ? new Date(q.createDate).toLocaleDateString(currentLang === 'zh-CN' ? 'zh-CN' : 'en-US') : '-';
                     const isStopped = q.stopped === true;
                     
                     return `
@@ -226,24 +276,24 @@
                                 <div class="flex-1">
                                     <div class="flex items-center gap-2">
                                         <h3 class="text-lg font-bold text-gray-800">${q.title}</h3>
-                                        ${isStopped ? '<span class="inline-block bg-red-100 text-red-600 text-xs font-bold px-2 py-1 rounded-full border border-red-300">⏹ 已停止作答</span>' : ''}
+                                        ${isStopped ? '<span class="inline-block bg-red-100 text-red-600 text-xs font-bold px-2 py-1 rounded-full border border-red-300">⏹ ' + t('stopped_label') + '</span>' : ''}
                                     </div>
-                                    <p class="text-sm text-gray-500 mt-1">${q.totalQuestions}道题 · 创建于 ${createDate}</p>
+                                    <p class="text-sm text-gray-500 mt-1">${q.totalQuestions}${t('question_count')} · ${t('created_at')} ${createDate}</p>
                                 </div>
                             </div>
                             
                             <div class="flex gap-3">
                                 <button onclick="${isStopped ? `resumeExam('${q.id}')` : `stopExam('${q.id}')`}" 
                                     class="flex-1 ${isStopped ? 'bg-green-500 hover:bg-green-600' : 'bg-yellow-500 hover:bg-yellow-600'} text-white font-bold py-2 px-4 rounded-lg transition">
-                                    ${isStopped ? '▶ 恢复作答' : '⛔ 停止作答'}
+                                    ${isStopped ? '▶ ' + t('resume_exam') : '⛔ ' + t('stop_exam')}
                                 </button>
                                 <button onclick="viewProgress('${q.id}')" 
                                     class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition">
-                                    📊 查看完成情况
+                                    📊 ${t('view_progress_btn')}
                                 </button>
                                 <button onclick="deleteQuestion('${q.id}', '${q.title}')" 
                                     class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition">
-                                    🗑️ 删除
+                                    🗑️ ${t('delete')}
                                 </button>
                             </div>
                         </div>
@@ -253,7 +303,7 @@
             } catch (error) {
                 console.error('加载题单失败:', error);
                 document.getElementById('questionsList').innerHTML = 
-                    '<div class="text-center py-12 text-red-500">加载失败，请刷新重试</div>';
+                    '<div class="text-center py-12 text-red-500">' + t('load_error') + '</div>';
             }
         }
 
@@ -263,14 +313,14 @@
             if (!file) return;
             
             if (!file.name.endsWith('.md')) {
-                showUploadStatus('请选择.md格式的文件', 'error');
+                showUploadStatus(t('select_md_file'), 'error');
                 return;
             }
             
             const formData = new FormData();
             formData.append('file', file);
             
-            showUploadStatus('正在上传和解析...', 'loading');
+            showUploadStatus(t('uploading'), 'loading');
             
             try {
                 const response = await fetch('/api/parent/upload', {
@@ -282,15 +332,15 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    showUploadStatus(`上传成功！共 ${data.questionCount} 道题`, 'success');
-                    loadQuestions(); // 刷新列表
+                    showUploadStatus(t('upload_success', {count: data.questionCount}), 'success');
+                    loadQuestions();
                     document.getElementById('fileInput').value = '';
                 } else {
-                    showUploadStatus('上传失败：' + data.message, 'error');
+                    showUploadStatus(t('upload_error') + data.message, 'error');
                 }
             } catch (error) {
                 console.error('上传失败:', error);
-                showUploadStatus('上传失败，请重试', 'error');
+                showUploadStatus(t('upload_error'), 'error');
             }
         }
 
@@ -310,7 +360,7 @@
 
         // 停止作答
         async function stopExam(questionId) {
-            if (!confirm('确定要停止该题单的所有作答吗？')) {
+            if (!confirm(t('confirm_stop'))) {
                 return;
             }
             
@@ -323,20 +373,20 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    alert('已停止作答');
-                    loadQuestions(); // 刷新列表
+                    alert(t('stopped_success'));
+                    loadQuestions();
                 } else {
-                    alert('操作失败：' + data.message);
+                    alert(t('operation_failed') + data.message);
                 }
             } catch (error) {
                 console.error('停止失败:', error);
-                alert('操作失败');
+                alert(t('operation_failed'));
             }
         }
 
         // 恢复作答
         async function resumeExam(questionId) {
-            if (!confirm('确定要恢复该题单的作答吗？')) {
+            if (!confirm(t('confirm_resume'))) {
                 return;
             }
             
@@ -349,14 +399,14 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    alert('已恢复作答');
-                    loadQuestions(); // 刷新列表
+                    alert(t('resumed_success'));
+                    loadQuestions();
                 } else {
-                    alert('操作失败：' + data.message);
+                    alert(t('operation_failed') + data.message);
                 }
             } catch (error) {
                 console.error('恢复失败:', error);
-                alert('操作失败');
+                alert(t('operation_failed'));
             }
         }
 
@@ -370,7 +420,7 @@
                 const data = await response.json();
                 
                 if (!data.success) {
-                    alert('获取进度失败');
+                    alert(t('get_progress_failed'));
                     return;
                 }
                 
@@ -378,25 +428,25 @@
                 const content = document.getElementById('progressContent');
                 
                 if (data.progress.length === 0) {
-                    content.innerHTML = '<p class="text-gray-500 text-center py-8">暂无作答记录</p>';
+                    content.innerHTML = '<p class="text-gray-500 text-center py-8">' + t('no_records') + '</p>';
                 } else {
                     let html = '';
                     data.progress.forEach(p => {
-                        let statusText = '未开始';
+                        let statusText = t('status_not_started');
                         let statusClass = 'text-gray-500';
                         if (p.status === 'completed') {
-                            statusText = '已完成';
+                            statusText = t('status_completed');
                             statusClass = 'text-green-600';
                         } else if (p.status === 'in_progress') {
-                            statusText = '进行中';
+                            statusText = t('status_in_progress');
                             statusClass = 'text-blue-600';
                         } else if (p.status === 'stopped') {
-                            statusText = '已停止';
+                            statusText = t('status_stopped');
                             statusClass = 'text-red-600';
                         }
                         
                         const completeDate = p.completeDate ? 
-                            new Date(p.completeDate).toLocaleString('zh-CN') : '-';
+                            new Date(p.completeDate).toLocaleString(currentLang === 'zh-CN' ? 'zh-CN' : 'en-US') : '-';
                         const answeredCount = p.questionDetails ? p.questionDetails.filter(q => q.submitted).length : 0;
                         
                         html += `
@@ -406,13 +456,13 @@
                                     <span class="${statusClass} font-bold">${statusText}</span>
                                 </div>
                                 <div class="grid grid-cols-3 gap-4 text-sm mb-3">
-                                    <div><span class="text-gray-400">得分：</span><span class="font-bold text-indigo-600">${p.lastScore || 0}分</span></div>
-                                    <div><span class="text-gray-400">答对/已答/总数：</span><span class="font-bold">${p.correctCount}/${answeredCount}/${p.totalCount}</span></div>
-                                    <div><span class="text-gray-400">完成时间：</span>${completeDate}</div>
+                                    <div><span class="text-gray-400">${t('score_label')}</span><span class="font-bold text-indigo-600">${p.lastScore || 0}${t('score_unit')}</span></div>
+                                    <div><span class="text-gray-400">${t('answer_ratio')}</span><span class="font-bold">${p.correctCount}/${answeredCount}/${p.totalCount}</span></div>
+                                    <div><span class="text-gray-400">${t('complete_time')}</span>${completeDate}</div>
                                 </div>
                                 ${p.questionDetails && p.questionDetails.length > 0 ? `
                                     <div class="mt-3">
-                                        <h5 class="font-bold text-sm text-gray-600 mb-2">逐题详情：</h5>
+                                        <h5 class="font-bold text-sm text-gray-600 mb-2">${t('question_detail')}</h5>
                                         <div class="flex flex-wrap gap-2">
                                             ${p.questionDetails.map(q => {
                                                 let dotClass = 'bg-gray-300';
@@ -420,16 +470,16 @@
                                                     dotClass = q.isCorrect ? 'bg-green-500' : 'bg-red-500';
                                                 }
                                                 let typeLabel = '';
-                                                if (q.type === 'multiple') typeLabel = '多';
-                                                else if (q.type === 'truefalse') typeLabel = '判';
+                                                if (q.type === 'multiple') typeLabel = t('type_multiple');
+                                                else if (q.type === 'truefalse') typeLabel = t('type_truefalse');
                                                 return `
                                                     <div class="relative group">
                                                         <div class="w-8 h-8 rounded-full ${dotClass} flex items-center justify-center text-white text-xs font-bold cursor-pointer">
                                                             ${q.index}
                                                         </div>
                                                         <div class="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 mb-1 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 whitespace-nowrap z-10" style="min-width: 120px;">
-                                                            ${typeLabel ? '[' + typeLabel + '] ' : ''}${q.title || '题' + q.index}<br>
-                                                            ${q.submitted ? '作答：' + q.userAnswer + ' | 答案：' + q.correctAnswer : '未作答'}
+                                                            ${typeLabel ? '[' + typeLabel + '] ' : ''}${q.title || t('question') + q.index}<br>
+                                                            ${q.submitted ? t('answered') + q.userAnswer + ' | ' + t('correct_answer_short') + q.correctAnswer : t('not_answered')}
                                                         </div>
                                                     </div>
                                                 `;
@@ -447,7 +497,7 @@
                 modal.classList.add('flex');
             } catch (error) {
                 console.error('获取进度失败:', error);
-                alert('获取进度失败');
+                alert(t('get_progress_failed'));
             }
         }
 
@@ -460,7 +510,7 @@
 
         // 删除题单
         async function deleteQuestion(questionId, title) {
-            if (!confirm(`确定要删除题单"${title}"吗？\n此操作不可恢复！`)) {
+            if (!confirm(t('confirm_delete', {title: title}))) {
                 return;
             }
             
@@ -473,14 +523,14 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    alert('删除成功');
-                    loadQuestions(); // 刷新列表
+                    alert(t('delete_success'));
+                    loadQuestions();
                 } else {
-                    alert('删除失败：' + data.message);
+                    alert(t('delete_failed') + data.message);
                 }
             } catch (error) {
                 console.error('删除失败:', error);
-                alert('删除失败');
+                alert(t('delete_failed'));
             }
         }
 
@@ -496,6 +546,47 @@
                 console.error('退出失败:', error);
             }
         }
+
+        // 语言切换下拉菜单功能
+        function toggleLangDropdown() {
+            const switcher = document.getElementById('langSwitcher');
+            switcher.classList.toggle('open');
+        }
+
+        function switchLang(lang) {
+            currentLang = lang;
+            localStorage.setItem('lang', currentLang);
+            document.getElementById('langSwitcher').classList.remove('open');
+            location.reload();
+        }
+
+        function updateLangDisplay() {
+            const flag = document.getElementById('currentLangFlag');
+            const text = document.getElementById('currentLangText');
+            
+            if (currentLang === 'zh-CN') {
+                flag.textContent = '🇨🇳';
+                text.textContent = '简体中文';
+            } else {
+                flag.textContent = '🇺🇸';
+                text.textContent = 'English';
+            }
+            
+            document.querySelectorAll('.lang-option').forEach(opt => {
+                if (opt.dataset.lang === currentLang) {
+                    opt.classList.add('active');
+                } else {
+                    opt.classList.remove('active');
+                }
+            });
+        }
+
+        document.addEventListener('click', function(e) {
+            const switcher = document.getElementById('langSwitcher');
+            if (switcher && !switcher.contains(e.target)) {
+                switcher.classList.remove('open');
+            }
+        });
 
         // 拖拽上传
         const uploadArea = document.getElementById('uploadArea');
@@ -522,6 +613,8 @@
 
         // 页面加载
         document.addEventListener('DOMContentLoaded', function() {
+            updateLangDisplay();
+            updatePageText();
             loadUserInfo();
             loadQuestions();
             loadCurrentPasswordQuestion();

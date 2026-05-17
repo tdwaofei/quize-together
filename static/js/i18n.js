@@ -1,0 +1,374 @@
+// 多语言支持
+const i18n = {
+    'zh-CN': {
+        // 登录页
+        'title': '信息学竞赛练习系统',
+        'login_title': '信息学竞赛练习系统',
+        'login_subtitle': '请登录以继续',
+        'username': '用户名',
+        'username_placeholder': '请输入用户名',
+        'password': '密码',
+        'password_placeholder': '请输入密码（答案的汉语拼音）',
+        'password_hint': '提示：密码是答案的汉语拼音，不需要空格',
+        'password_hint_btn': '🔑 查看密码提示',
+        'login_btn': '登录',
+        'login_error': '登录失败，请检查用户名和密码',
+        
+        // 密码提示弹窗
+        'password_hint_title': '🔑 密码提示',
+        'password_hint_question': '请回答以下问题：',
+        'password_hint_tip': '💡 答案的汉语拼音就是你的登录密码',
+        'password_hint_no_question': '暂无密码题',
+        'password_hint_contact': '请联系家长设置密码题',
+        'password_hint_ok': '知道了',
+        
+        // 导航
+        'nav_student': '孩子端',
+        'nav_parent': '家长端',
+        'nav_logout': '退出',
+        'welcome': '欢迎回来',
+        
+        // 学生端 dashboard
+        'student_title': '信息学竞赛',
+        'student_subtitle': '练习系统',
+        'my_questions': '我的题单',
+        'track_progress': '管理和追踪你的学习进度',
+        'stat_total': '总题单',
+        'stat_completed': '已完成',
+        'stat_progress': '进行中',
+        'stat_avg': '平均分',
+        'search_label': '搜索题单',
+        'search_placeholder': '输入试题名称...',
+        'filter_status': '完成状态',
+        'sort_label': '排序方式',
+        'status_all': '全部状态',
+        'status_not_started': '未开始',
+        'status_in_progress': '进行中',
+        'status_completed': '已完成',
+        'status_stopped': '已停止',
+        'sort_newest': '最新发布',
+        'sort_oldest': '最早发布',
+        'sort_name_asc': '名称 A-Z',
+        'sort_name_desc': '名称 Z-A',
+        'sort_score': '得分高到低',
+        'sort_progress': '进度高到低',
+        'question_count': '题',
+        'progress_label': '完成进度',
+        'score_label': '得分',
+        'detail_btn': '详情',
+        'continue_btn': '继续',
+        'retest_btn': '重测',
+        'stopped_label': '已停止作答',
+        'empty_title': '没有找到符合条件的题单',
+        'clear_filters': '清除筛选条件',
+        'load_error': '加载失败，请刷新重试',
+        'no_questions': '暂无题单，请等待家长上传',
+        'confirm_retest': '重新作答将清除之前的进度，确定吗？',
+        
+        // 练习页面
+        'exam_title': '练习中',
+        'question': '题',
+        'back_btn': '← 返回',
+        'answered_label': '已完成',
+        'current_score': '当前得分',
+        'submit_answer': '✅ 提交答案',
+        'skip_question': '⏭️ 暂时跳过',
+        'correct_answer_label': '📋 正确答案',
+        'solution_label': '💡 解题过程',
+        'key_points_label': '🎯 本题考点',
+        'review_label': '📚 复习要点',
+        'next_question': '下一题 →',
+        'question_nav': '题目导航',
+        'stat_total_questions': '总题数',
+        'stat_correct': '答对',
+        'stat_wrong': '答错',
+        'stat_score': '得分',
+        'question_index_nav': '题目导航（点击跳转，悬停预览）',
+        'back_to_list': '返回题单',
+        'submit': '提交答案',
+        'next': '下一题',
+        'prev': '上一题',
+        'finish': '完成练习',
+        'correct': '✅ 回答正确！',
+        'wrong': '❌ 回答错误',
+        'correct_answer': '正确答案：',
+        'your_answer': '你的答案：',
+        'solution': '解题过程',
+        'key_points': '本题考点',
+        'review': '复习要点',
+        
+        // 家长端
+        'parent_title': '信息学竞赛练习系统 - 管理后台',
+        'password_question_title': '🔑 设置登录密码题',
+        'password_question_desc': '设置一道题目，答案的汉语拼音将作为孩子的登录密码',
+        'current_password_question': '当前密码题：',
+        'question_label': '问题（例如：昨天读的水浒传人物是谁？）',
+        'question_placeholder': '输入密码题',
+        'answer_label': '答案（例如：李逵）',
+        'answer_placeholder': '输入答案',
+        'answer_tip': '💡 系统会自动将答案转换为拼音作为密码（如"李逵"→"likui"）',
+        'set_password_btn': '设置密码题',
+        'set_time': '设置时间：',
+        'fill_all_fields': '请输入问题和答案',
+        'password_set_success': '密码题设置成功！密码为：',
+        'set_failed': '设置失败：',
+        'set_failed_retry': '设置失败，请重试',
+        
+        // 上传
+        'upload_title': '📤 上传新题单',
+        'sample_reference': '参考样例',
+        'sample_desc': '下载题库格式样例文档，了解如何正确出题',
+        'download_sample': '下载样例',
+        'upload_desc': '选择或拖拽.md格式的题库文件到此处',
+        'upload_requirements': '文件需包含：题的名字、题目、答案、解题过程、本题考点、复习要点',
+        'upload_btn': '选择文件',
+        'uploading': '正在上传和解析...',
+        'upload_success': '上传成功！共 {count} 道题',
+        'upload_error': '上传失败：',
+        'select_md_file': '请选择.md格式的文件',
+        
+        // 题单管理
+        'manage_title': '📋 题单管理',
+        'no_questions_parent': '暂无题单，请上传.md文件',
+        'created_at': '创建于',
+        'stop_exam': '⛔ 停止作答',
+        'resume_exam': '▶ 恢复作答',
+        'view_progress_btn': '📊 查看完成情况',
+        'delete': '🗑️ 删除',
+        'confirm_stop': '确定要停止该题单的所有作答吗？',
+        'confirm_resume': '确定要恢复该题单的作答吗？',
+        'stopped_success': '已停止作答',
+        'resumed_success': '已恢复作答',
+        'operation_failed': '操作失败：',
+        'get_progress_failed': '获取进度失败',
+        'no_records': '暂无作答记录',
+        'score_label': '得分：',
+        'score_unit': '分',
+        'answer_ratio': '答对/已答/总数：',
+        'complete_time': '完成时间：',
+        'question_detail': '逐题详情：',
+        'type_multiple': '多',
+        'type_truefalse': '判',
+        'answered': '作答：',
+        'not_answered': '未作答',
+        'correct_answer_short': '答案：',
+        'confirm_delete': '确定要删除题单"{title}"吗？\n此操作不可恢复！',
+        'delete_success': '删除成功',
+        'delete_failed': '删除失败：',
+        
+        // 通用
+        'save': '保存',
+        'cancel': '取消',
+        'confirm': '确定',
+        'close': '关闭',
+        'loading': '加载中...',
+        'error': '错误',
+        'success': '成功',
+        'language': '语言',
+        'switch_lang': 'Switch to English'
+    },
+    'en': {
+        // Login
+        'title': 'Informatics Competition Practice System',
+        'login_title': 'Informatics Competition Practice System',
+        'login_subtitle': 'Please login to continue',
+        'username': 'Username',
+        'username_placeholder': 'Enter username',
+        'password': 'Password',
+        'password_placeholder': 'Enter password (pinyin of answer)',
+        'password_hint': 'Hint: Password is the pinyin of the answer, no spaces',
+        'password_hint_btn': '🔑 Password Hint',
+        'login_btn': 'Login',
+        'login_error': 'Login failed, please check username and password',
+        
+        // Password hint modal
+        'password_hint_title': '🔑 Password Hint',
+        'password_hint_question': 'Please answer the following question:',
+        'password_hint_tip': '💡 The pinyin of the answer is your login password',
+        'password_hint_no_question': 'No password question set',
+        'password_hint_contact': 'Please contact parent to set password question',
+        'password_hint_ok': 'Got it',
+        
+        // Navigation
+        'nav_student': 'Student',
+        'nav_parent': 'Parent',
+        'nav_logout': 'Logout',
+        'welcome': 'Welcome back',
+        
+        // Student dashboard
+        'student_title': 'Informatics Competition',
+        'student_subtitle': 'Practice System',
+        'my_questions': 'My Question Sets',
+        'track_progress': 'Manage and track your learning progress',
+        'stat_total': 'Total Sets',
+        'stat_completed': 'Completed',
+        'stat_progress': 'In Progress',
+        'stat_avg': 'Average Score',
+        'search_label': 'Search',
+        'search_placeholder': 'Enter question set name...',
+        'filter_status': 'Status',
+        'sort_label': 'Sort by',
+        'status_all': 'All Status',
+        'status_not_started': 'Not Started',
+        'status_in_progress': 'In Progress',
+        'status_completed': 'Completed',
+        'status_stopped': 'Stopped',
+        'sort_newest': 'Newest First',
+        'sort_oldest': 'Oldest First',
+        'sort_name_asc': 'Name A-Z',
+        'sort_name_desc': 'Name Z-A',
+        'sort_score': 'Score High to Low',
+        'sort_progress': 'Progress High to Low',
+        'question_count': 'questions',
+        'progress_label': 'Progress',
+        'score_label': 'Score',
+        'detail_btn': 'Detail',
+        'continue_btn': 'Continue',
+        'retest_btn': 'Retest',
+        'stopped_label': 'Stopped',
+        'empty_title': 'No question sets found',
+        'clear_filters': 'Clear filters',
+        'load_error': 'Failed to load, please refresh',
+        'no_questions': 'No question sets available, please wait for parent to upload',
+        'confirm_retest': 'Retesting will clear previous progress, are you sure?',
+        
+        // Exam
+        'exam_title': 'Practicing',
+        'question': 'Question',
+        'back_btn': '← Back',
+        'answered_label': 'Completed',
+        'current_score': 'Score',
+        'submit_answer': '✅ Submit',
+        'skip_question': '⏭️ Skip',
+        'correct_answer_label': '📋 Correct Answer',
+        'solution_label': '💡 Solution',
+        'key_points_label': '🎯 Key Points',
+        'review_label': '📚 Review',
+        'next_question': 'Next →',
+        'question_nav': 'Question Nav',
+        'stat_total_questions': 'Total',
+        'stat_correct': 'Correct',
+        'stat_wrong': 'Wrong',
+        'stat_score': 'Score',
+        'question_index_nav': 'Question Navigation (Click to jump)',
+        'back_to_list': 'Back to List',
+        'submit': 'Submit Answer',
+        'next': 'Next',
+        'prev': 'Previous',
+        'finish': 'Finish Practice',
+        'correct': '✅ Correct!',
+        'wrong': '❌ Wrong',
+        'correct_answer': 'Correct answer: ',
+        'your_answer': 'Your answer: ',
+        'solution': 'Solution',
+        'key_points': 'Key Points',
+        'review': 'Review',
+        
+        // Parent
+        'parent_title': 'Informatics Competition Practice System - Admin',
+        'password_question_title': '🔑 Set Login Password Question',
+        'password_question_desc': 'Set a question, the pinyin of the answer will be the child\'s login password',
+        'current_password_question': 'Current password question:',
+        'question_label': 'Question (e.g., Who is the character in Water Margin read yesterday?)',
+        'question_placeholder': 'Enter password question',
+        'answer_label': 'Answer (e.g., Li Kui)',
+        'answer_placeholder': 'Enter answer',
+        'answer_tip': '💡 The system will automatically convert the answer to pinyin as password (e.g., "Li Kui" → "likui")',
+        'set_password_btn': 'Set Password Question',
+        'set_time': 'Set time: ',
+        'fill_all_fields': 'Please enter both question and answer',
+        'password_set_success': 'Password question set successfully! Password is: ',
+        'set_failed': 'Failed to set: ',
+        'set_failed_retry': 'Failed to set, please retry',
+        
+        // Upload
+        'upload_title': '📤 Upload New Question Set',
+        'sample_reference': 'Sample Reference',
+        'sample_desc': 'Download sample document to understand the correct format',
+        'download_sample': 'Download Sample',
+        'upload_desc': 'Select or drag .md format question bank file here',
+        'upload_requirements': 'File must contain: title, questions, answers, solutions, key points, review notes',
+        'upload_btn': 'Select File',
+        'uploading': 'Uploading and parsing...',
+        'upload_success': 'Upload successful! Total {count} questions',
+        'upload_error': 'Upload failed: ',
+        'select_md_file': 'Please select a .md file',
+        
+        // Manage
+        'manage_title': '📋 Question Set Management',
+        'no_questions_parent': 'No question sets, please upload .md file',
+        'created_at': 'Created at',
+        'stop_exam': '⛔ Stop Practice',
+        'resume_exam': '▶ Resume Practice',
+        'view_progress_btn': '📊 View Progress',
+        'delete': '🗑️ Delete',
+        'confirm_stop': 'Are you sure you want to stop all practice for this question set?',
+        'confirm_resume': 'Are you sure you want to resume practice for this question set?',
+        'stopped_success': 'Practice stopped',
+        'resumed_success': 'Practice resumed',
+        'operation_failed': 'Operation failed: ',
+        'get_progress_failed': 'Failed to get progress',
+        'no_records': 'No practice records',
+        'score_label': 'Score: ',
+        'score_unit': 'pts',
+        'answer_ratio': 'Correct/Answered/Total: ',
+        'complete_time': 'Complete time: ',
+        'question_detail': 'Question details:',
+        'type_multiple': 'M',
+        'type_truefalse': 'T/F',
+        'answered': 'Answered: ',
+        'not_answered': 'Not answered',
+        'correct_answer_short': 'Answer: ',
+        'confirm_delete': 'Are you sure you want to delete question set "{title}"?\nThis action cannot be undone!',
+        'delete_success': 'Deleted successfully',
+        'delete_failed': 'Failed to delete: ',
+        
+        // Common
+        'save': 'Save',
+        'cancel': 'Cancel',
+        'confirm': 'Confirm',
+        'close': 'Close',
+        'loading': 'Loading...',
+        'error': 'Error',
+        'success': 'Success',
+        'language': 'Language',
+        'switch_lang': '切换到中文'
+    }
+};
+
+// 当前语言
+let currentLang = localStorage.getItem('lang') || 'zh-CN';
+
+// 获取翻译
+function t(key, params = {}) {
+    let text = i18n[currentLang][key] || key;
+    // 替换参数
+    for (let k in params) {
+        text = text.replace(`{${k}}`, params[k]);
+    }
+    return text;
+}
+
+// 切换语言
+function toggleLanguage() {
+    currentLang = currentLang === 'zh-CN' ? 'en' : 'zh-CN';
+    localStorage.setItem('lang', currentLang);
+    location.reload();
+}
+
+// 更新页面文本
+function updatePageText() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+            el.placeholder = t(key);
+        } else {
+            el.textContent = t(key);
+        }
+    });
+}
+
+// 初始化
+document.addEventListener('DOMContentLoaded', function() {
+    updatePageText();
+});
