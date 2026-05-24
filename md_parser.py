@@ -78,7 +78,8 @@ def parse_md_to_json(content):
     # 按考点分割题目（支持两种格式）
     # 格式1: ### 考点 X.X 标题
     # 格式2: ### 第 X 题
-    question_blocks = re.split(r'\n(?=###\s+(?:考点\s+\d+\.?\d*|第\s*\d+\s*题)\s*)', content)
+    # 格式3: ### 考点 标题（没有数字）
+    question_blocks = re.split(r'\n(?=###\s+(?:考点|第\s*\d+\s*题)\s*)', content)
     
     for block in question_blocks:
         if not block.strip():
@@ -127,17 +128,24 @@ def parse_question_block(block):
     
     # 提取考点ID和标题
     # 格式1: ### 考点 1.1 标识符、关键字...
-    # 格式2: ### 第 1 题
+    # 格式2: ### 考点 标题（没有数字）
+    # 格式3: ### 第 1 题
     header_match = re.search(r'###\s+考点\s+(\d+\.?\d*)\s+(.+?)(?=\n|$)', block)
     if header_match:
         question['id'] = header_match.group(1)
         question['title'] = header_match.group(2).strip()
     else:
-        # 尝试格式2: ### 第 X 题
-        header_match = re.search(r'###\s+第\s*(\d+)\s*题', block)
+        # 尝试格式2: ### 考点 标题（没有数字）
+        header_match = re.search(r'###\s+考点\s+(.+?)(?=\n|$)', block)
         if header_match:
-            question['id'] = header_match.group(1)
-            question['title'] = f'第{header_match.group(1)}题'
+            question['id'] = ''
+            question['title'] = header_match.group(1).strip()
+        else:
+            # 尝试格式3: ### 第 X 题
+            header_match = re.search(r'###\s+第\s*(\d+)\s*题', block)
+            if header_match:
+                question['id'] = header_match.group(1)
+                question['title'] = f'第{header_match.group(1)}题'
     
     # 提取题目内容
     # 尝试格式1: **题目：**后的内容

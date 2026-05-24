@@ -7,6 +7,7 @@ import uuid
 import re
 from datetime import datetime
 from werkzeug.utils import secure_filename
+import requests
 from config import *
 from md_parser import parse_md_to_json, validate_md_format
 
@@ -606,15 +607,54 @@ def get_all_progress(question_id):
             if question_data:
                 for idx, q in enumerate(question_data.get('questions', [])):
                     user_ans = data.get('answers', {}).get(str(idx))
+                    
+                    # 提取用户答案
+                    user_answer = ''
+                    if user_ans:
+                        if isinstance(user_ans, dict):
+                            user_answer = user_ans.get('selected', '')
+                        else:
+                            user_answer = user_ans
+                    
+                    # 判断是否正确
+                    is_correct = None
+                    if user_ans:
+                        correct_answer = q.get('answer', '')
+                        q_type = q.get('type', 'single')
+                        
+                        if q_type == 'truefalse':
+                            user_norm = user_answer.strip().upper()
+                            correct_norm = correct_answer.strip().upper()
+                            if user_norm in ('正确', '对', '√', 'T', 'TRUE'):
+                                user_norm = 'T'
+                            if user_norm in ('错误', '错', '×', 'F', 'FALSE'):
+                                user_norm = 'F'
+                            if correct_norm in ('正确', '对', '√', 'T', 'TRUE'):
+                                correct_norm = 'T'
+                            if correct_norm in ('错误', '错', '×', 'F', 'FALSE'):
+                                correct_norm = 'F'
+                            is_correct = user_norm == correct_norm
+                        elif q_type == 'multiple':
+                            user_set = set(user_answer.upper())
+                            correct_set = set(correct_answer.upper())
+                            is_correct = user_set == correct_set
+                        else:
+                            is_correct = user_answer.upper() == correct_answer.upper()
+                    
                     detail = {
                         'index': idx + 1,
                         'id': q.get('id', ''),
                         'title': q.get('title', ''),
                         'type': q.get('type', 'single'),
-                        'userAnswer': user_ans.get('selected', '') if user_ans else '',
+                        'userAnswer': user_answer,
                         'correctAnswer': q.get('answer', ''),
-                        'isCorrect': user_ans.get('correct', False) if user_ans else None,
-                        'submitted': user_ans.get('submitted', False) if user_ans else False
+                        'isCorrect': is_correct,
+                        'submitted': user_ans is not None,
+                        'question': q.get('question', ''),
+                        'options': q.get('options', {}),
+                        'solution': q.get('solution', ''),
+                        'keyPoints': q.get('keyPoints', ''),
+                        'review': q.get('review', '')
                     }
                     question_details.append(detail)
             
@@ -629,6 +669,272 @@ def get_all_progress(question_id):
             })
     
     return jsonify({'success': True, 'progress': progress_list})
+
+# ========== AI出题功能 ==========
+
+# 学科名称映射
+SUBJECT_NAMES = {
+    'math': '数学',
+    'cs': '计算机',
+    'chinese': '语文',
+    'english': '英语'
+}
+
+# 年级名称映射
+GRADE_NAMES = {
+    '1': '一年级', '2': '二年级', '3': '三年级',
+    '4': '四年级', '5': '五年级', '6': '六年级',
+    '7': '初一', '8': '初二', '9': '初三',
+    '10': '高一', '11': '高二', '12': '高三'
+}
+
+def call_ai_api(prompt):
+    """调用AI API生成题目"""
+    api_key = None
+    api_url = None
+    model = None
+    
+    if AI_PROVIDER == 'deepseek':
+        api_key = DEEPSEEK_API_KEY
+        api_url = DEEPSEEK_API_URL
+        model = 'deepseek-chat'
+    elif AI_PROVIDER == 'volcengine':
+        api_key = VOLCENGINE_API_KEY
+        api_url = VOLCENGINE_API_URL
+        model = 'ark-code-latest'
+    else:
+        raise ValueError(f"不支持的AI提供商: {AI_PROVIDER}")
+    
+    if not api_key:
+        raise ValueError(f"请配置{AI_PROVIDER}的API密钥")
+    
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {api_key}'
+    }
+    
+    data = {
+        'model': model,
+        'messages': [
+            {
+                'role': 'system',
+                'content': '你是一个专业的题目生成助手。请严格按照用户要求的格式生成题目，只输出Markdown内容，不要其他说明文字。'
+            },
+            {
+                'role': 'user',
+                'content': prompt
+            }
+        ],
+        'temperature': 0.7
+    }
+    
+    try:
+        response = requests.post(api_url, headers=headers, json=data, timeout=60)
+        response.raise_for_status()
+        result = response.json()
+        return result['choices'][0]['message']['content']
+    except Exception as e:
+        raise Exception(f"AI调用失败: {str(e)}")
+
+def generate_ai_prompt(subject, grade, scope, single_choice_count, multiple_choice_count, true_false_count):
+    """生成AI提示词"""
+    subject_name = SUBJECT_NAMES.get(subject, subject)
+    grade_name = GRADE_NAMES.get(grade, grade)
+    
+    prompt = f"""请为{grade_name}学生生成一套{subject_name}练习题。
+
+出题范围：{scope if scope else '请根据该年级和学科的常见考点出题'}
+
+题目类型和数量要求：
+- 单选题：{single_choice_count}道
+- 多选题：{multiple_choice_count}道
+- 判断题：{true_false_count}道
+
+请严格按照以下Markdown格式生成题目，只输出Markdown内容，不要其他说明文字：
+
+---
+
+# {subject_name}练习题
+
+## 一、单选题
+
+### 考点 [考点名称]
+
+**题目：** [题目内容]
+
+A. [选项A]
+B. [选项B]
+C. [选项C]
+D. [选项D]
+
+<details>
+<summary>点击查看答案与解析</summary>
+
+**答案：** [A/B/C/D]
+
+**解题过程：** [详细的解题过程]
+
+**本题考点：** [本题考查的知识点]
+
+**复习要点：** [相关的复习要点]
+</details>
+
+---
+
+## 二、多选题
+
+### 考点 [考点名称]
+
+**题目：** [题目内容]
+
+A. [选项A]
+B. [选项B]
+C. [选项C]
+D. [选项D]
+
+<details>
+<summary>点击查看答案与解析</summary>
+
+**答案：** [如：ACD]
+
+**解题过程：** [详细的解题过程]
+
+**本题考点：** [本题考查的知识点]
+
+**复习要点：** [相关的复习要点]
+</details>
+
+---
+
+## 三、判断题
+
+### 考点 [考点名称]
+
+**题目：** [题目内容]
+
+A. 正确
+B. 错误
+
+<details>
+<summary>点击查看答案与解析</summary>
+
+**答案：** [正确/错误]
+
+**解题过程：** [详细的解题过程]
+
+**本题考点：** [本题考查的知识点]
+
+**复习要点：** [相关的复习要点]
+</details>
+
+---
+
+请生成完整的题目内容，确保题目适合{grade_name}学生的水平。"""
+    
+    return prompt
+
+@app.route('/api/parent/ai-generate', methods=['POST'])
+@login_required('parent')
+def ai_generate_questions():
+    """AI生成题目"""
+    try:
+        data = request.json
+        subject = data.get('subject')
+        grade = data.get('grade')
+        scope = data.get('scope', '')
+        single_choice_count = int(data.get('singleChoiceCount', 0))
+        multiple_choice_count = int(data.get('multipleChoiceCount', 0))
+        true_false_count = int(data.get('trueFalseCount', 0))
+        
+        # 验证
+        if not subject or not grade:
+            return jsonify({'success': False, 'message': '请选择学科和年级'})
+        
+        if single_choice_count + multiple_choice_count + true_false_count == 0:
+            return jsonify({'success': False, 'message': '请至少选择一种题目类型'})
+        
+        # 生成提示词
+        prompt = generate_ai_prompt(
+            subject, grade, scope,
+            single_choice_count, multiple_choice_count, true_false_count
+        )
+        
+        # 调用AI API
+        markdown = call_ai_api(prompt)
+        
+        # 清理Markdown（移除可能的markdown标记）
+        markdown = markdown.strip()
+        if markdown.startswith('```markdown'):
+            markdown = markdown[11:]
+        if markdown.startswith('```'):
+            markdown = markdown[3:]
+        if markdown.endswith('```'):
+            markdown = markdown[:-3]
+        markdown = markdown.strip()
+        
+        # 简单验证格式
+        if not validate_md_format(markdown):
+            return jsonify({
+                'success': False, 
+                'message': 'AI生成的题目格式有问题，请重试'
+            })
+        
+        return jsonify({'success': True, 'markdown': markdown})
+        
+    except Exception as e:
+        print(f"AI生成失败: {e}")
+        return jsonify({'success': False, 'message': str(e)})
+
+@app.route('/api/parent/ai-publish', methods=['POST'])
+@login_required('parent')
+def ai_publish_questions():
+    """发布AI生成的题目"""
+    try:
+        data = request.json
+        subject = data.get('subject')
+        grade = data.get('grade')
+        scope = data.get('scope', '')
+        markdown = data.get('markdown', '')
+        
+        if not markdown:
+            return jsonify({'success': False, 'message': '题目内容为空'})
+        
+        # 验证格式
+        if not validate_md_format(markdown):
+            return jsonify({'success': False, 'message': '题目格式有问题'})
+        
+        # 解析为JSON
+        question_data = parse_md_to_json(markdown)
+        
+        # 生成标题：学科+出题范围+系统时间
+        subject_name = SUBJECT_NAMES.get(subject, subject)
+        now = datetime.now()
+        time_str = now.strftime('%Y-%m-%d %H:%M')
+        # 简化范围，避免太长
+        short_scope = scope[:20] + '...' if len(scope) > 20 else scope
+        title = f"{subject_name} {short_scope} {time_str}"
+        question_data['title'] = title
+        
+        question_data['createDate'] = now.isoformat()
+        
+        # 生成唯一ID
+        question_id = f"ai_quiz_{now.strftime('%Y%m%d_%H%M%S')}"
+        
+        # 保存JSON文件
+        json_filepath = os.path.join(QUESTIONS_DIR, f"{question_id}.json")
+        with open(json_filepath, 'w', encoding='utf-8') as f:
+            json.dump(question_data, f, ensure_ascii=False, indent=2)
+        
+        return jsonify({
+            'success': True,
+            'message': '发布成功',
+            'questionId': question_id,
+            'title': title,
+            'questionCount': len(question_data.get('questions', []))
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'发布失败: {str(e)}'})
 
 # 静态文件服务
 @app.route('/static/<path:filename>')

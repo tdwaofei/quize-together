@@ -518,7 +518,7 @@
             const avgScore = completedQuestions.length > 0 
                 ? Math.round(completedQuestions.reduce((sum, q) => sum + q.lastScore, 0) / completedQuestions.length)
                 : '-';
-            
+             
             // 动画更新数字
             animateNumber('statTotal', total);
             animateNumber('statCompleted', completed);

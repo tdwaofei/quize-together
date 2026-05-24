@@ -117,7 +117,7 @@
         <div class="bg-white rounded-2xl shadow-xl p-6 mb-6 fade-in">
             <h2 class="text-xl font-bold text-gray-800 mb-4" data-i18n="upload_title">📤 上传新题单</h2>
             <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 flex-wrap">
                     <span class="text-2xl">📋</span>
                     <div class="flex-1">
                         <p class="font-bold text-blue-800 mb-1" data-i18n="sample_reference">参考样例</p>
@@ -127,6 +127,10 @@
                         class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition flex items-center gap-2">
                         <span>⬇️</span> <span data-i18n="download_sample">下载样例</span>
                     </a>
+                    <button onclick="openAIGenerateModal()" 
+                        class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-2 px-4 rounded-lg transition flex items-center gap-2 shadow-lg">
+                        <span>🤖</span> <span data-i18n="ai_generate_btn">AI出题</span>
+                    </button>
                 </div>
             </div>
             <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center" id="uploadArea">
@@ -162,6 +166,125 @@
             </div>
             <div id="progressContent">
                 <!-- 动态内容 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- AI出题弹窗 -->
+    <div id="aiGenerateModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-3xl m-4 max-h-[90vh] overflow-y-auto">
+            <!-- 步骤1：表单 -->
+            <div id="aiFormStep">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-gray-800" data-i18n="ai_generate_title">🤖 AI智能出题</h3>
+                    <button onclick="closeAIGenerateModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                </div>
+                <p class="text-gray-600 mb-6" data-i18n="ai_generate_desc">填写以下信息，AI将自动为您生成题目</p>
+                
+                <div class="space-y-6">
+                    <!-- 学科 -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3" data-i18n="subject_label">学科</label>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <button type="button" onclick="selectSubject('math')" class="subject-btn border-2 border-gray-300 rounded-xl p-4 hover:border-blue-500 transition" data-subject="math">
+                                <div class="text-3xl mb-2">📐</div>
+                                <div class="font-medium" data-i18n="subject_math">数学</div>
+                            </button>
+                            <button type="button" onclick="selectSubject('cs')" class="subject-btn border-2 border-gray-300 rounded-xl p-4 hover:border-blue-500 transition" data-subject="cs">
+                                <div class="text-3xl mb-2">💻</div>
+                                <div class="font-medium" data-i18n="subject_cs">计算机</div>
+                            </button>
+                            <button type="button" onclick="selectSubject('chinese')" class="subject-btn border-2 border-gray-300 rounded-xl p-4 hover:border-blue-500 transition" data-subject="chinese">
+                                <div class="text-3xl mb-2">📚</div>
+                                <div class="font-medium" data-i18n="subject_chinese">语文</div>
+                            </button>
+                            <button type="button" onclick="selectSubject('english')" class="subject-btn border-2 border-gray-300 rounded-xl p-4 hover:border-blue-500 transition" data-subject="english">
+                                <div class="text-3xl mb-2">🌍</div>
+                                <div class="font-medium" data-i18n="subject_english">英语</div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 年级 -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3" data-i18n="grade_label">年级</label>
+                        <div class="grid grid-cols-3 md:grid-cols-6 gap-2">
+                            <button type="button" onclick="selectGrade('1')" class="grade-btn border-2 border-gray-300 rounded-lg p-2 hover:border-blue-500 transition text-sm" data-grade="1" data-i18n="grade_1">一年级</button>
+                            <button type="button" onclick="selectGrade('2')" class="grade-btn border-2 border-gray-300 rounded-lg p-2 hover:border-blue-500 transition text-sm" data-grade="2" data-i18n="grade_2">二年级</button>
+                            <button type="button" onclick="selectGrade('3')" class="grade-btn border-2 border-gray-300 rounded-lg p-2 hover:border-blue-500 transition text-sm" data-grade="3" data-i18n="grade_3">三年级</button>
+                            <button type="button" onclick="selectGrade('4')" class="grade-btn border-2 border-gray-300 rounded-lg p-2 hover:border-blue-500 transition text-sm" data-grade="4" data-i18n="grade_4">四年级</button>
+                            <button type="button" onclick="selectGrade('5')" class="grade-btn border-2 border-gray-300 rounded-lg p-2 hover:border-blue-500 transition text-sm" data-grade="5" data-i18n="grade_5">五年级</button>
+                            <button type="button" onclick="selectGrade('6')" class="grade-btn border-2 border-gray-300 rounded-lg p-2 hover:border-blue-500 transition text-sm" data-grade="6" data-i18n="grade_6">六年级</button>
+                            <button type="button" onclick="selectGrade('7')" class="grade-btn border-2 border-gray-300 rounded-lg p-2 hover:border-blue-500 transition text-sm" data-grade="7" data-i18n="grade_7">初一</button>
+                            <button type="button" onclick="selectGrade('8')" class="grade-btn border-2 border-gray-300 rounded-lg p-2 hover:border-blue-500 transition text-sm" data-grade="8" data-i18n="grade_8">初二</button>
+                            <button type="button" onclick="selectGrade('9')" class="grade-btn border-2 border-gray-300 rounded-lg p-2 hover:border-blue-500 transition text-sm" data-grade="9" data-i18n="grade_9">初三</button>
+                            <button type="button" onclick="selectGrade('10')" class="grade-btn border-2 border-gray-300 rounded-lg p-2 hover:border-blue-500 transition text-sm" data-grade="10" data-i18n="grade_10">高一</button>
+                            <button type="button" onclick="selectGrade('11')" class="grade-btn border-2 border-gray-300 rounded-lg p-2 hover:border-blue-500 transition text-sm" data-grade="11" data-i18n="grade_11">高二</button>
+                            <button type="button" onclick="selectGrade('12')" class="grade-btn border-2 border-gray-300 rounded-lg p-2 hover:border-blue-500 transition text-sm" data-grade="12" data-i18n="grade_12">高三</button>
+                        </div>
+                    </div>
+
+                    <!-- 出题范围 -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2" data-i18n="scope_label">出题范围</label>
+                        <textarea id="aiScope" rows="3"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                            data-i18n="scope_placeholder" placeholder="例如：变量、函数、字符串、一维数组、排序、算法；乘法、公倍数、立体几何、三角函数"></textarea>
+                    </div>
+
+                    <!-- 题目类型和数量 -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3" data-i18n="question_type_label">出题类型和数量</label>
+                        <div class="grid grid-cols-3 gap-4">
+                            <div class="border border-gray-300 rounded-xl p-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2" data-i18n="single_choice_label">单选题</label>
+                                <input type="number" id="singleChoiceCount" min="0" max="20" value="0"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                                    data-i18n="question_count_placeholder" placeholder="数量">
+                            </div>
+                            <div class="border border-gray-300 rounded-xl p-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2" data-i18n="multiple_choice_label">多选题</label>
+                                <input type="number" id="multipleChoiceCount" min="0" max="20" value="0"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                                    data-i18n="question_count_placeholder" placeholder="数量">
+                            </div>
+                            <div class="border border-gray-300 rounded-xl p-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2" data-i18n="true_false_label">判断题</label>
+                                <input type="number" id="trueFalseCount" min="0" max="20" value="0"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                                    data-i18n="question_count_placeholder" placeholder="数量">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="aiFormStatus" class="hidden"></div>
+
+                    <button onclick="generateQuestions()" id="generateBtn"
+                        class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-4 px-6 rounded-xl transition shadow-lg text-lg">
+                        <span data-i18n="generate_btn">✨ 生成题目</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 步骤2：预览 -->
+            <div id="aiPreviewStep" class="hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-gray-800" data-i18n="preview_title">📋 题目预览</h3>
+                    <button onclick="closeAIGenerateModal()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                </div>
+                <div id="previewContent" class="bg-gray-50 rounded-xl p-6 max-h-[60vh] overflow-y-auto mb-6">
+                    <!-- 动态预览内容 -->
+                </div>
+                <div class="flex gap-4">
+                    <button onclick="backToForm()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-6 rounded-xl transition">
+                        <span data-i18n="back_edit_btn">← 返回修改</span>
+                    </button>
+                    <button onclick="publishQuestions()" id="publishBtn"
+                        class="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-3 px-6 rounded-xl transition shadow-lg">
+                        <span data-i18n="publish_btn">✅ 发布题单</span>
+                    </button>
+                </div>
+                <div id="aiPublishStatus" class="mt-4 hidden"></div>
             </div>
         </div>
     </div>
@@ -461,26 +584,71 @@
                                     <div><span class="text-gray-400">${t('complete_time')}</span>${completeDate}</div>
                                 </div>
                                 ${p.questionDetails && p.questionDetails.length > 0 ? `
-                                    <div class="mt-3">
-                                        <h5 class="font-bold text-sm text-gray-600 mb-2">${t('question_detail')}</h5>
-                                        <div class="flex flex-wrap gap-2">
+                                    <div class="mt-4 border-t pt-4">
+                                        <h5 class="font-bold text-sm text-gray-600 mb-3">${t('question_detail')}</h5>
+                                        <div class="space-y-3">
                                             ${p.questionDetails.map(q => {
-                                                let dotClass = 'bg-gray-300';
+                                                let bgClass = 'bg-gray-50 border-gray-200';
+                                                let resultText = '';
+                                                let resultClass = '';
                                                 if (q.submitted) {
-                                                    dotClass = q.isCorrect ? 'bg-green-500' : 'bg-red-500';
+                                                    if (q.isCorrect) {
+                                                        bgClass = 'bg-green-50 border-green-200';
+                                                        resultText = '✓ 正确';
+                                                        resultClass = 'text-green-600';
+                                                    } else {
+                                                        bgClass = 'bg-red-50 border-red-200';
+                                                        resultText = '✗ 错误';
+                                                        resultClass = 'text-red-600';
+                                                    }
+                                                } else {
+                                                    resultText = '未作答';
+                                                    resultClass = 'text-gray-500';
                                                 }
-                                                let typeLabel = '';
-                                                if (q.type === 'multiple') typeLabel = t('type_multiple');
-                                                else if (q.type === 'truefalse') typeLabel = t('type_truefalse');
+                                                
+                                                let typeLabel = '单选题';
+                                                if (q.type === 'multiple') typeLabel = '多选题';
+                                                else if (q.type === 'truefalse') typeLabel = '判断题';
+                                                
+                                                let optionsHtml = '';
+                                                if (q.options && Object.keys(q.options).length > 0) {
+                                                    optionsHtml = '<div class="space-y-1 mb-3">';
+                                                    for (let key in q.options) {
+                                                        const isSelected = q.userAnswer && q.userAnswer.includes(key);
+                                                        const isCorrect = q.correctAnswer && q.correctAnswer.includes(key);
+                                                        let optionClass = 'text-gray-700';
+                                                        if (q.submitted) {
+                                                            if (isSelected && isCorrect) {
+                                                                optionClass = 'text-green-600 font-bold';
+                                                            } else if (isSelected && !isCorrect) {
+                                                                optionClass = 'text-red-600 font-bold';
+                                                            } else if (!isSelected && isCorrect) {
+                                                                optionClass = 'text-green-600';
+                                                            }
+                                                        }
+                                                        optionsHtml += `<div class="${optionClass}">${key}. ${q.options[key]}</div>`;
+                                                    }
+                                                    optionsHtml += '</div>';
+                                                }
+                                                
                                                 return `
-                                                    <div class="relative group">
-                                                        <div class="w-8 h-8 rounded-full ${dotClass} flex items-center justify-center text-white text-xs font-bold cursor-pointer">
-                                                            ${q.index}
+                                                    <div class="border ${bgClass} rounded-lg p-4">
+                                                        <div class="flex justify-between items-start mb-2">
+                                                            <span class="font-bold text-gray-800">第${q.index}题 (${typeLabel})</span>
+                                                            <span class="font-bold ${resultClass}">${resultText}</span>
                                                         </div>
-                                                        <div class="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 mb-1 bg-gray-800 text-white text-xs rounded-lg px-3 py-2 whitespace-nowrap z-10" style="min-width: 120px;">
-                                                            ${typeLabel ? '[' + typeLabel + '] ' : ''}${q.title || t('question') + q.index}<br>
-                                                            ${q.submitted ? t('answered') + q.userAnswer + ' | ' + t('correct_answer_short') + q.correctAnswer : t('not_answered')}
+                                                        <div class="mb-2">
+                                                            <h6 class="font-bold text-gray-700 mb-1">${q.title || ''}</h6>
+                                                            <p class="text-gray-600">${q.question || ''}</p>
                                                         </div>
+                                                        ${optionsHtml}
+                                                        ${q.submitted ? `
+                                                            <div class="text-sm mt-3 pt-3 border-t border-gray-200">
+                                                                <p class="text-gray-600">学生答案: <span class="font-medium">${q.userAnswer || '无'}</span></p>
+                                                                <p class="text-gray-600">正确答案: <span class="font-medium text-green-600">${q.correctAnswer || '无'}</span></p>
+                                                                ${q.solution ? `<p class="text-gray-500 mt-2"><span class="font-medium">解题过程：</span>${q.solution}</p>` : ''}
+                                                            </div>
+                                                        ` : ''}
                                                     </div>
                                                 `;
                                             }).join('')}
@@ -610,6 +778,272 @@
                 handleFileSelect({ target: { files: files } });
             }
         });
+
+        // ========== AI出题功能 ==========
+        
+        // 状态变量
+        let selectedSubject = null;
+        let selectedGrade = null;
+        let generatedMarkdown = null;
+        
+        // 打开AI出题弹窗
+        function openAIGenerateModal() {
+            const modal = document.getElementById('aiGenerateModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            resetAIGenerateForm();
+        }
+        
+        // 关闭AI出题弹窗
+        function closeAIGenerateModal() {
+            const modal = document.getElementById('aiGenerateModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            resetAIGenerateForm();
+        }
+        
+        // 重置表单
+        function resetAIGenerateForm() {
+            selectedSubject = null;
+            selectedGrade = null;
+            generatedMarkdown = null;
+            
+            document.getElementById('aiFormStep').classList.remove('hidden');
+            document.getElementById('aiPreviewStep').classList.add('hidden');
+            
+            document.getElementById('aiScope').value = '';
+            document.getElementById('singleChoiceCount').value = '0';
+            document.getElementById('multipleChoiceCount').value = '0';
+            document.getElementById('trueFalseCount').value = '0';
+            
+            document.querySelectorAll('.subject-btn').forEach(btn => {
+                btn.classList.remove('border-blue-500', 'bg-blue-50');
+                btn.classList.add('border-gray-300');
+            });
+            document.querySelectorAll('.grade-btn').forEach(btn => {
+                btn.classList.remove('border-blue-500', 'bg-blue-50');
+                btn.classList.add('border-gray-300');
+            });
+            
+            hideStatus('aiFormStatus');
+            hideStatus('aiPublishStatus');
+        }
+        
+        // 选择学科
+        function selectSubject(subject) {
+            selectedSubject = subject;
+            document.querySelectorAll('.subject-btn').forEach(btn => {
+                if (btn.dataset.subject === subject) {
+                    btn.classList.remove('border-gray-300');
+                    btn.classList.add('border-blue-500', 'bg-blue-50');
+                } else {
+                    btn.classList.remove('border-blue-500', 'bg-blue-50');
+                    btn.classList.add('border-gray-300');
+                }
+            });
+        }
+        
+        // 选择年级
+        function selectGrade(grade) {
+            selectedGrade = grade;
+            document.querySelectorAll('.grade-btn').forEach(btn => {
+                if (btn.dataset.grade === grade) {
+                    btn.classList.remove('border-gray-300');
+                    btn.classList.add('border-blue-500', 'bg-blue-50');
+                } else {
+                    btn.classList.remove('border-blue-500', 'bg-blue-50');
+                    btn.classList.add('border-gray-300');
+                }
+            });
+        }
+        
+        // 显示状态
+        function showAIStatus(elementId, message, type) {
+            const statusDiv = document.getElementById(elementId);
+            statusDiv.classList.remove('hidden');
+            
+            let bgClass = 'bg-gray-100 text-gray-700';
+            if (type === 'success') bgClass = 'bg-green-100 text-green-700';
+            if (type === 'error') bgClass = 'bg-red-100 text-red-700';
+            if (type === 'loading') bgClass = 'bg-blue-100 text-blue-700';
+            
+            statusDiv.className = `p-4 rounded-lg ${bgClass}`;
+            statusDiv.textContent = message;
+        }
+        
+        // 隐藏状态
+        function hideStatus(elementId) {
+            document.getElementById(elementId).classList.add('hidden');
+        }
+        
+        // 生成题目
+        async function generateQuestions() {
+            // 验证
+            if (!selectedSubject) {
+                showAIStatus('aiFormStatus', t('fill_all_fields_ai'), 'error');
+                return;
+            }
+            if (!selectedGrade) {
+                showAIStatus('aiFormStatus', t('fill_all_fields_ai'), 'error');
+                return;
+            }
+            
+            const scope = document.getElementById('aiScope').value.trim();
+            const singleCount = parseInt(document.getElementById('singleChoiceCount').value) || 0;
+            const multiCount = parseInt(document.getElementById('multipleChoiceCount').value) || 0;
+            const tfCount = parseInt(document.getElementById('trueFalseCount').value) || 0;
+            
+            if (singleCount + multiCount + tfCount === 0) {
+                showAIStatus('aiFormStatus', t('fill_all_fields_ai'), 'error');
+                return;
+            }
+            
+            // 显示加载
+            const btn = document.getElementById('generateBtn');
+            btn.disabled = true;
+            btn.innerHTML = `<span data-i18n="generating">${t('generating')}</span>`;
+            showAIStatus('aiFormStatus', t('generating'), 'loading');
+            
+            try {
+                const response = await fetch('/api/parent/ai-generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        subject: selectedSubject,
+                        grade: selectedGrade,
+                        scope: scope,
+                        singleChoiceCount: singleCount,
+                        multipleChoiceCount: multiCount,
+                        trueFalseCount: tfCount
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    generatedMarkdown = data.markdown;
+                    showPreview(generatedMarkdown);
+                } else {
+                    showAIStatus('aiFormStatus', t('generate_failed') + data.message, 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = `<span data-i18n="generate_btn">${t('generate_btn')}</span>`;
+                }
+            } catch (error) {
+                console.error('生成失败:', error);
+                showAIStatus('aiFormStatus', t('generate_failed'), 'error');
+                btn.disabled = false;
+                btn.innerHTML = `<span data-i18n="generate_btn">${t('generate_btn')}</span>`;
+            }
+        }
+        
+        // 简单的Markdown解析函数
+        function parseMarkdown(markdown) {
+            let html = markdown;
+            
+            // 处理标题
+            html = html.replace(/^### (.*)$/gm, '<h4 class="text-lg font-bold text-gray-800 mt-4 mb-2">$1</h4>');
+            html = html.replace(/^## (.*)$/gm, '<h3 class="text-xl font-bold text-gray-800 mt-6 mb-3 border-b pb-2">$1</h3>');
+            html = html.replace(/^# (.*)$/gm, '<h2 class="text-2xl font-bold text-gray-800 mt-4 mb-4">$1</h2>');
+            
+            // 处理粗体
+            html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-gray-800">$1</strong>');
+            
+            // 处理选项 (A. B. C. D.)
+            html = html.replace(/^([A-D]\. .*)$/gm, '<div class="ml-4 my-2 text-gray-700"><span class="font-bold">$1</span></div>');
+            
+            // 处理段落
+            html = html.split('\n').map(line => {
+                if (!line.trim()) return '';
+                if (line.startsWith('<')) return line;
+                return `<p class="text-gray-700 my-2">${line}</p>`;
+            }).join('\n');
+            
+            // 处理details标签，改为显示为展开的内容（家长可以看到答案）
+            html = html.replace(/<details>/g, '');
+            html = html.replace(/<summary>.*?<\/summary>/g, '');
+            html = html.replace(/<\/details>/g, '');
+            
+            // 处理分割线
+            html = html.replace(/^---$/gm, '<hr class="my-6 border-gray-200">');
+            
+            return html;
+        }
+
+        // 显示预览
+        function showPreview(markdown) {
+            document.getElementById('aiFormStep').classList.add('hidden');
+            document.getElementById('aiPreviewStep').classList.remove('hidden');
+            
+            const previewContent = document.getElementById('previewContent');
+            previewContent.innerHTML = `<div class="prose prose-sm max-w-none">${parseMarkdown(markdown)}</div>`;
+        }
+        
+        // 转义HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // 返回表单
+        function backToForm() {
+            document.getElementById('aiFormStep').classList.remove('hidden');
+            document.getElementById('aiPreviewStep').classList.add('hidden');
+            
+            const btn = document.getElementById('generateBtn');
+            btn.disabled = false;
+            btn.innerHTML = `<span data-i18n="generate_btn">${t('generate_btn')}</span>`;
+            hideStatus('aiFormStatus');
+        }
+        
+        // 发布题单
+        async function publishQuestions() {
+            if (!generatedMarkdown) return;
+            
+            if (!confirm(t('confirm_publish'))) return;
+            
+            const btn = document.getElementById('publishBtn');
+            btn.disabled = true;
+            
+            try {
+                // 使用新的ai-publish接口
+                const response = await fetch('/api/parent/ai-publish', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        subject: selectedSubject,
+                        grade: selectedGrade,
+                        scope: document.getElementById('aiScope').value.trim(),
+                        markdown: generatedMarkdown
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAIStatus('aiPublishStatus', t('publish_success'), 'success');
+                    loadQuestions();
+                    setTimeout(() => {
+                        closeAIGenerateModal();
+                    }, 1500);
+                } else {
+                    showAIStatus('aiPublishStatus', t('publish_failed') + data.message, 'error');
+                    btn.disabled = false;
+                }
+            } catch (error) {
+                console.error('发布失败:', error);
+                showAIStatus('aiPublishStatus', t('publish_failed'), 'error');
+                btn.disabled = false;
+            }
+        }
+        
+        // ========== 页面加载 ==========
 
         // 页面加载
         document.addEventListener('DOMContentLoaded', function() {
